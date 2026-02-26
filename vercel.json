@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "mission-control/package.json",
-      "use": "@vercel/next"
-    }
-  ]
-}
