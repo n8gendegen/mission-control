@@ -5,11 +5,5 @@
       "src": "mission-control/package.json",
       "use": "@vercel/next"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "mission-control/$1"
-    }
   ]
 }
