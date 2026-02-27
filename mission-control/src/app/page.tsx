@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
+import { Sidebar } from "../components/layout/Sidebar";
 
 const AGENTS = [
   { id: "henry", name: "Henry", title: "CEO / Operator" },
@@ -52,7 +53,6 @@ const buildSeedHistory = (): HistoryMap => {
   }, {} as HistoryMap);
 };
 
-import { Sidebar } from "@/components/layout/Sidebar";
 
 export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<string>(AGENTS[0].id);
