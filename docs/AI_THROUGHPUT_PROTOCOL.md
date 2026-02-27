@@ -44,3 +44,11 @@ _All agents operate under this protocol. No exceptions._
 - One micro-PR per agent per hour: open draft PRs with stubs/TODOs even if unfinished.
 - MergeBot authority: may split PRs, revert breaking commits, close stale branches, and assign stub PRs when cadence slips.
 - Definition of done for micro-slices: build locally, CI green (or note defer), evidence attached, blast radius respected.
+- Artifact-only commits (docs/screenshots) do not count as throughput unless paired with a functional code delta that advances acceptance criteria.
+- Tracked work only: every slice must have a GitHub issue ID, and every PR must reference it (Closes/Refs #id) or it is ignored.
+- Layout rebuild is split into issues L1-L4 (sidebar markup, tab state, module placeholders, SHA/footer) each with DOM proof + screenshot + CI.
+- PR-first & push-often: open a draft PR within 15 minutes of starting a slice and push updates at least every 25 minutes.
+- Commits-by-agent metric: dashboard must show commits per agent for the last 2 hours; agents at 0 for 2 hours are reassigned automatically.
+- Proof of life each checkpoint: include git status, build output (last 10 lines or CI link), and the commit/PR updated; missing proof implies blocked.
+- Stop-doing list (until layout/chat/security slices merge): no screenshot-only commits, no protocol edits, no refactors/polish, no preview polish/bundling.
+
