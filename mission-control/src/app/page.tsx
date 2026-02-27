@@ -52,6 +52,8 @@ const buildSeedHistory = (): HistoryMap => {
   }, {} as HistoryMap);
 };
 
+import { Sidebar } from "@/components/layout/Sidebar";
+
 export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<string>(AGENTS[0].id);
   const [input, setInput] = useState("");
@@ -134,58 +136,9 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-[#050508] text-white">
-      <aside className="w-72 border-r border-white/10 bg-black/30 backdrop-blur-xl p-6 flex flex-col gap-8">
-        <div>
-          <h1 className="text-sm font-semibold tracking-[0.3em] text-white/60">MISSION CONTROL</h1>
-          <div className="mt-6 flex flex-col gap-2">
-            {PANELS.map((panel) => (
-              <button
-                key={panel.id}
-                onClick={() => setActivePanel(panel.id)}
-                className={`w-full rounded-2xl border px-4 py-3 text-left transition flex items-center gap-2 ${
-                  activePanel === panel.id
-                    ? "border-emerald-300 bg-emerald-300/15 text-white"
-                    : "border-white/10 text-white/60 hover:border-white/30"
-                }`}
-              >
-                <span>{panel.icon}</span>
-                <div>
-                  <div className="text-sm font-semibold">{panel.label}</div>
-                  <div className="text-xs text-white/40">{panel.blurb}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+      <Sidebar />
 
-        {activePanel === "chat" && (
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">Agents</p>
-            <div className="space-y-2">
-              {AGENTS.map((agent) => (
-                <button
-                  key={agent.id}
-                  onClick={() => setSelectedAgent(agent.id)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    selectedAgent === agent.id
-                      ? "border-emerald-300 bg-emerald-300/15 text-white"
-                      : "border-white/10 text-white/60 hover:border-white/30"
-                  }`}
-                >
-                  <div className="text-sm font-semibold">{agent.name}</div>
-                  <div className="text-xs text-white/40">{agent.title}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-auto text-sm text-white/60">
-          Status: <span className="font-semibold text-emerald-300">Autonomous</span>
-        </div>
-      </aside>
-
-      <main className="flex-1 p-10">
+      <main className="ml-[240px] flex-1 p-10">
         {activePanel === "chat" ? (
           <>
             <div className="mb-6 flex items-center justify-between">

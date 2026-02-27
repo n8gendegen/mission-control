@@ -1,0 +1,11 @@
+# Next.js defaults
+.next/
+.vercel/
+node_modules/
+
+# Env
+.env*
+../.env*
+
+# Mac
+.DS_Store
