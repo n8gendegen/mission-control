@@ -35,3 +35,12 @@
     - Track average commits/day, time between commits, % PRs merged same day, stalled intervals >75m.
 
 _All agents operate under this protocol. No exceptions._
+
+## Enforcement Addendum (2026-02-27)
+- No promises, only proof: every update must include commit/PR/evidence; future promises without proof trigger MergeBot stub commits.
+- Two-strike auto-reassign: missing the 20-25min commit twice without blocker reassigns the slice; three strikes moves agent to docs/tests only.
+- Daily environment readiness gate: npm ci, npm run build, npm run dev, preview deploy, and openclaw status must be green before feature work.
+- Single-owner hotspot files: src/app/page.tsx owned by Henry today; others must work in isolated components. PRs touching hotspots need owner sign-off.
+- One micro-PR per agent per hour: open draft PRs with stubs/TODOs even if unfinished.
+- MergeBot authority: may split PRs, revert breaking commits, close stale branches, and assign stub PRs when cadence slips.
+- Definition of done for micro-slices: build locally, CI green (or note defer), evidence attached, blast radius respected.
