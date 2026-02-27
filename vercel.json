@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "",
-  "outputDirectory": "."
+  "framework": "nextjs",
+  "installCommand": "cd mission-control && npm install",
+  "buildCommand": "cd mission-control && npm run build"
 }
