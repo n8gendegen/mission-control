@@ -1,0 +1,92 @@
+[
+  {
+    "id": "task-1",
+    "column": "backlog",
+    "title": "Rewatch 4/5 Henry Ops review to pull new invariants",
+    "description": "Summarize everything Henry flagged for feels off",
+    "statusColor": "bg-red-400",
+    "ownerInitials": "A",
+    "source": "YouTube",
+    "timeAgo": "9 days"
+  },
+  {
+    "id": "task-2",
+    "column": "backlog",
+    "title": "Map frontier AI news sources for daily digest",
+    "description": "Prioritize Musk-scale stories and link to Ops",
+    "statusColor": "bg-amber-300",
+    "ownerInitials": "H",
+    "source": "Clawdbot",
+    "timeAgo": "7 days"
+  },
+  {
+    "id": "task-3",
+    "column": "backlog",
+    "title": "Draft pitch for Treasury Flow Sentinel",
+    "description": "Outline alerting value prop for Apollo",
+    "statusColor": "bg-purple-300",
+    "ownerInitials": "A",
+    "source": "Agents",
+    "timeAgo": "5 days"
+  },
+  {
+    "id": "task-4",
+    "column": "backlog",
+    "title": "Prep Mission Control 15:00 UI spec handoff",
+    "description": "Link screenshots + DOM notes",
+    "statusColor": "bg-sky-300",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "3 days"
+  },
+  {
+    "id": "task-5",
+    "column": "in-progress",
+    "title": "Ship TopBar metrics slice",
+    "description": "Match labels + purple completion metric",
+    "statusColor": "bg-emerald-300",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "2 days"
+  },
+  {
+    "id": "task-6",
+    "column": "in-progress",
+    "title": "Wire kanban shell across three columns",
+    "description": "Ensure spacing + layout is solid",
+    "statusColor": "bg-amber-400",
+    "ownerInitials": "A",
+    "source": "Ops Board",
+    "timeAgo": "1 day"
+  },
+  {
+    "id": "task-7",
+    "column": "in-progress",
+    "title": "Audit news ingestion sources",
+    "description": "Ready Brave/RSS mix for Radar",
+    "statusColor": "bg-purple-400",
+    "ownerInitials": "H",
+    "source": "News",
+    "timeAgo": "8 hours"
+  },
+  {
+    "id": "task-8",
+    "column": "rev",
+    "title": "Finalize Revenue Lab backlog structure",
+    "description": "Add confidence scores + tags",
+    "statusColor": "bg-sky-400",
+    "ownerInitials": "A",
+    "source": "Mission Control",
+    "timeAgo": "6 hours"
+  },
+  {
+    "id": "task-9",
+    "column": "rev",
+    "title": "QA live activity cards",
+    "description": "Ensure avatars + timestamps line up",
+    "statusColor": "bg-emerald-400",
+    "ownerInitials": "H",
+    "source": "Ops",
+    "timeAgo": "4 hours"
+  }
+]

@@ -1,10 +1,10 @@
-import type { Task } from "../../../data/tasks";
+import type { TaskRecord } from "../../lib/data/types";
 import { TaskCard } from "./TaskCard";
 
 type ColumnProps = {
   title: string;
   count: number;
-  tasks: Task[];
+  tasks: TaskRecord[];
 };
 
 export function Column({ title, count, tasks }: ColumnProps) {

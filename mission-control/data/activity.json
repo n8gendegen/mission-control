@@ -1,0 +1,38 @@
+[
+  {
+    "id": "act-1",
+    "owner": "Henry",
+    "text": "Started last30days research: challenges people are having with OpenClaw.",
+    "timeAgo": "4 minutes"
+  },
+  {
+    "id": "act-2",
+    "owner": "Alex",
+    "text": "Fixed memory path bug in Supabase heartbeat worker.",
+    "timeAgo": "12 minutes"
+  },
+  {
+    "id": "act-3",
+    "owner": "Henry",
+    "text": "Redesigned activity feed for sidebar — full height, compact cards.",
+    "timeAgo": "42 minutes"
+  },
+  {
+    "id": "act-4",
+    "owner": "Alex",
+    "text": "Synced Revenue Lab backlog tags with Ops board cards.",
+    "timeAgo": "about 1 hour"
+  },
+  {
+    "id": "act-5",
+    "owner": "Henry",
+    "text": "Shared Brave search results for Musk-scale AI news.",
+    "timeAgo": "2 hours"
+  },
+  {
+    "id": "act-6",
+    "owner": "Alex",
+    "text": "Filed Mission Control UI spec recap in docs/ui-15min-spec.md.",
+    "timeAgo": "3 hours"
+  }
+]

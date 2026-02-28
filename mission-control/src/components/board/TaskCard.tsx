@@ -1,6 +1,6 @@
-import type { Task } from "../../../data/tasks";
+import type { TaskRecord } from "../../lib/data/types";
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({ task }: { task: TaskRecord }) {
   return (
     <article className="rounded-2xl border border-white/5 bg-[#11131a] p-4 text-white/80 shadow-sm shadow-black/30 transition hover:-translate-y-1 hover:border-white/20 hover:bg-[#151823]">
       <div className="flex items-start justify-between">
