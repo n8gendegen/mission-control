@@ -1,5 +1,9 @@
 body {
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background-color: #050508;
-  color: #ffffff;
+  color: #f8f9ff;
+}
+
+* {
+  letter-spacing: 0.01em;
 }
