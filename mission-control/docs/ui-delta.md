@@ -1,13 +1,13 @@
 # UI Delta Notes – Step 6 Styling
 
 ## Adjustments Completed
-- Sidebar: increased letter spacing, added subtle glow on active item, consistent padding.
-- TopBar: tightened spacing between metrics and actions; brightened purple accent; added hover on Pause/Ping.
-- Kanban cards: tuned background gradient, drop shadow, and border contrast; aligned status dots to top-left.
-- Typography: standardized Inter stack via global CSS; set consistent text sizes for titles, meta, body.
-- Hover states: cards, filters, and sidebar items now lift/brighten slightly.
-- Activity panel: matched padding/radius to cards; refined timestamp color.
+- Added radial-gradient background + updated global typography to improve contrast and match the reference glow.
+- Sidebar + filters: hover lift, subtle accent glow, and consistent letter spacing on all nav items.
+- TopBar: tighter spacing between metrics/actions, purple completion metric brightened, Pause/Ping buttons now highlight on hover.
+- Kanban cards: darker card surface, stronger drop shadow, sharper border and status dot alignment; hover state lifts/brightens.
+- Activity panel: padding/radius now match task cards, timestamps use muted slate tone, cards gain hover highlight.
+- Global selection + inputs inherit Inter, ensuring consistent look across buttons/fields.
 
 ## Remaining Differences vs. Reference
-- Exact iconography (ellipsis, dots) still placeholders; will refine during polish step.
-- Live Activity copy will update once Step 7 introduces real entries.
+- Icons (ellipsis, status dots, search) still placeholders until polish step.
+- Live Activity copy will be updated with Step 7 content.
