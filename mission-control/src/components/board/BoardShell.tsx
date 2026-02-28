@@ -14,7 +14,7 @@ const columns: ColumnConfig[] = [
 
 export function BoardShell() {
   return (
-    <section className="flex flex-1 gap-5">
+    <section className="flex flex-1 items-start gap-6">
       {columns.map((col) => {
         const columnTasks = tasks.filter((task) => task.column === col.id);
         return (

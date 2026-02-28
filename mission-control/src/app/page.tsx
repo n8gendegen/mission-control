@@ -5,17 +5,15 @@ import { TopBar } from "../components/layout/TopBar";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#05060b] text-white/80">
+    <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <Sidebar />
-      <div className="ml-[240px] flex min-h-screen gap-8 px-10 py-8">
-        <div className="flex flex-1 flex-col gap-6">
-          <TopBar />
+      <main className="ml-64 flex flex-1 flex-col space-y-6 px-8 py-6">
+        <TopBar />
+        <section className="flex items-start gap-6">
           <BoardShell />
-        </div>
-        <div className="w-[320px]">
           <ActivityPanel />
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

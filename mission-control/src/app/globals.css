@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --mc-bg: #04060a;
   --mc-panel: #0b0f16;

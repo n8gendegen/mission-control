@@ -8,12 +8,12 @@ const metrics = [
 export function TopBar() {
   return (
     <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-8">
+        <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.5em] text-white/40">Tasks</p>
           <h1 className="text-2xl font-semibold text-white">Mission Control</h1>
         </div>
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4">
           <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80">
             Pause
           </button>

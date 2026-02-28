@@ -46,9 +46,9 @@ const items: ActivityItem[] = [
 
 export function ActivityPanel() {
   return (
-    <aside className="w-[320px] rounded-3xl border border-white/5 bg-[#0b0f16] p-5 text-white/80">
+    <aside className="w-80 shrink-0 space-y-3 rounded-3xl border border-white/5 bg-[#0b0f16] p-5 text-white/80">
       <div className="text-xs uppercase tracking-[0.35em] text-white/40">Live Activity</div>
-      <div className="mt-5 space-y-3">
+      <div className="space-y-3">
         {items.map((item) => (
           <article
             key={item.id}
