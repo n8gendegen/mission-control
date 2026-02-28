@@ -1,0 +1,31 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Build app
+        run: npm run build
+      - name: Run visual regression
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+        run: |
+          npm run start -- --hostname 127.0.0.1 &
+          SERVER_PID=$!
+          npx wait-on http://127.0.0.1:3000
+          npm run test:visual
+          kill $SERVER_PID

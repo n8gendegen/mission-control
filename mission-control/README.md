@@ -31,3 +31,15 @@ Follow this list before promoting any change:
 5. **Theme polish:** Gradient background, glass cards, and button styles remain consistent with the reference screenshot.
 
 If any of these sections appear broken, run `npm run lint` / `npm run build` to confirm there are no compile errors, then check the deployed Vercel preview before merging.
+
+## Visual Regression
+
+Run Playwright snapshot tests locally with:
+
+```bash
+npm run dev &
+PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:visual
+```
+
+Or rely on `npm run test:visual` after starting `npm run start` in another terminal.
+
