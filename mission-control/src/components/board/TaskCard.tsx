@@ -3,7 +3,7 @@ import type { TaskColumn, TaskRecord } from "../../lib/data/types";
 const columnLabels: Record<TaskColumn, string> = {
   backlog: "Backlog",
   "in-progress": "In Progress",
-  rev: "Rev",
+  rev: "Completed",
 };
 
 const columnOrder: TaskColumn[] = ["backlog", "in-progress", "rev"];

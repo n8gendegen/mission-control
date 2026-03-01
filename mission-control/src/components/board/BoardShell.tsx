@@ -13,7 +13,7 @@ type ColumnConfig = {
 const columns: ColumnConfig[] = [
   { id: "backlog", title: "Backlog" },
   { id: "in-progress", title: "In Progress" },
-  { id: "rev", title: "Rev" },
+  { id: "rev", title: "Completed" },
 ];
 
 const initialTasks = getAllTasks();
