@@ -1,0 +1,17 @@
+{
+  "description": "Standard schema for Revenue Lab experiments logged in Mission Control.",
+  "fields": [
+    { "key": "name", "type": "string", "required": true, "notes": "Short experiment title." },
+    { "key": "hypothesis", "type": "string", "required": true, "notes": "What we expect to happen and why." },
+    { "key": "channel", "type": "string", "required": true, "notes": "Primary distribution channel (Concierge, YouTube, Bounties, etc.)." },
+    { "key": "targetAudience", "type": "string", "required": true, "notes": "Persona we are testing with." },
+    { "key": "offer", "type": "string", "required": true, "notes": "What we are delivering (product, service, content)." },
+    { "key": "pricing", "type": "string", "required": false, "notes": "Pricing being tested (if applicable)." },
+    { "key": "effort", "type": "integer", "required": true, "notes": "Estimated effort (1–5) where 1 is tiny and 5 is large." },
+    { "key": "impact", "type": "integer", "required": true, "notes": "Expected revenue/learning impact (1–5)." },
+    { "key": "confidence", "type": "integer", "required": true, "notes": "Our confidence score (1–5)." },
+    { "key": "owner", "type": "string", "required": true, "notes": "Accountable agent (Henry, Spy, Splitter, Steve, etc.)." },
+    { "key": "status", "type": "string", "required": true, "notes": "Backlog | In Progress | Rev | Live." },
+    { "key": "nextMilestone", "type": "string", "required": false, "notes": "Upcoming deliverable + target date." }
+  ]
+}
