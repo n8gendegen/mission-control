@@ -1,6 +1,20 @@
-import type { Task } from "../../../data/tasks";
+import type { TaskColumn, TaskRecord } from "../../lib/data/types";
 
-export function TaskCard({ task }: { task: Task }) {
+const columnLabels: Record<TaskColumn, string> = {
+  backlog: "Backlog",
+  "in-progress": "In Progress",
+  rev: "Rev",
+};
+
+const columnOrder: TaskColumn[] = ["backlog", "in-progress", "rev"];
+
+export function TaskCard({
+  task,
+  onMoveTask,
+}: {
+  task: TaskRecord;
+  onMoveTask: (taskId: string, column: TaskColumn) => void;
+}) {
   return (
     <article className="rounded-2xl border border-white/5 bg-[#11131a] p-4 text-white/80 shadow-sm shadow-black/30 transition hover:-translate-y-1 hover:border-white/20 hover:bg-[#151823]">
       <div className="flex items-start justify-between">
@@ -8,7 +22,17 @@ export function TaskCard({ task }: { task: Task }) {
           <span className={`h-2.5 w-2.5 rounded-full ${task.statusColor}`} />
           <span>{task.source}</span>
         </div>
-        <button className="text-white/30">•••</button>
+        <select
+          value={task.column}
+          onChange={(event) => onMoveTask(task.id, event.target.value as TaskColumn)}
+          className="rounded-full border border-white/10 bg-transparent px-2 py-1 text-[10px] uppercase tracking-widest text-white/60"
+        >
+          {columnOrder.map((col) => (
+            <option key={col} value={col} className="bg-[#0b0f16] text-black">
+              {columnLabels[col]}
+            </option>
+          ))}
+        </select>
       </div>
       <h3 className="mt-3 text-sm font-semibold text-white">{task.title}</h3>
       <p className="mt-1 text-xs text-white/50">{task.description}</p>
