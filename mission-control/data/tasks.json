@@ -1,92 +1,142 @@
 [
   {
-    "id": "task-1",
+    "id": "task-concierge-offer",
     "column": "backlog",
-    "title": "Rewatch 4/5 Henry Ops review to pull new invariants",
-    "description": "Summarize everything Henry flagged for feels off",
-    "statusColor": "bg-red-400",
-    "ownerInitials": "A",
-    "source": "YouTube",
-    "timeAgo": "9 days"
+    "title": "Define Clawbot Concierge offer & tiers",
+    "description": "One-pager covering audience, Tier 1 done-for-you install, Tier 2 Mission Control starter, pricing + approval flags.",
+    "statusColor": "bg-violet-400",
+    "ownerInitials": "Spl",
+    "source": "Concierge",
+    "timeAgo": "just now"
   },
   {
-    "id": "task-2",
+    "id": "task-concierge-copy",
     "column": "backlog",
-    "title": "Map frontier AI news sources for daily digest",
-    "description": "Prioritize Musk-scale stories and link to Ops",
+    "title": "Draft Clawbot Concierge landing page copy + FAQ",
+    "description": "Hero, benefits, how-it-works steps, CTA text, and 10-question FAQ for MVP page.",
+    "statusColor": "bg-sky-400",
+    "ownerInitials": "Sp",
+    "source": "Concierge",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-concierge-landing",
+    "column": "backlog",
+    "title": "Implement Clawbot Concierge landing page on Vercel",
+    "description": "Decide routing, build Next.js page with hero, benefits, process, FAQ, CTA; prep for Vercel deploy.",
+    "statusColor": "bg-emerald-400",
+    "ownerInitials": "St",
+    "source": "Concierge",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-concierge-form",
+    "column": "backlog",
+    "title": "Add lead capture form for Concierge requests",
+    "description": "Collect name/email/use-case+tier interest and persist safely (Airtable, Supabase, etc.).",
+    "statusColor": "bg-amber-400",
+    "ownerInitials": "St",
+    "source": "Concierge",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-concierge-chat",
+    "column": "backlog",
+    "title": "Design minimal guided install/chat flow",
+    "description": "Interactive helper to ask OS/stack, walk 4\u20138 install steps, and escalate to Concierge when blocked.",
+    "statusColor": "bg-rose-400",
+    "ownerInitials": "H",
+    "source": "Concierge",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-revlab-template",
+    "column": "backlog",
+    "title": "Define Revenue Lab experiment template",
+    "description": "Document standard fields (hypothesis, channel, EV, effort, owner, status) as schema for backlog.",
+    "statusColor": "bg-indigo-400",
+    "ownerInitials": "Spl",
+    "source": "Revenue Lab",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-revlab-backlog",
+    "column": "backlog",
+    "title": "Create initial Revenue Lab experiments backlog",
+    "description": "Seed 5+ scored experiments (pricing, YouTube funnel, AI spend dashboard, bounty automations).",
+    "statusColor": "bg-lime-400",
+    "ownerInitials": "Sp",
+    "source": "Revenue Lab",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-bounty-sources",
+    "column": "backlog",
+    "title": "Map bounty / code-fix sources & filters",
+    "description": "List 2\u20134 marketplaces or repos plus filters aligned with TS/Next/AI skills and payout targets.",
+    "statusColor": "bg-teal-400",
+    "ownerInitials": "Sp",
+    "source": "Bounty Lane",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-bounty-target",
+    "column": "backlog",
+    "title": "Select first bounty/code-fix target",
+    "description": "Pick best-fit bounty with repo link, acceptance criteria, payout, and risk notes for Steve to execute.",
+    "statusColor": "bg-fuchsia-400",
+    "ownerInitials": "Spl",
+    "source": "Bounty Lane",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-replit-oauth",
+    "column": "backlog",
+    "title": "Replit OAuth fix \u2013 NextAuth/Clerk",
+    "description": "Claim bounty #21873, secure access, implement Google OAuth regression fix + tests per acceptance criteria.",
+    "statusColor": "bg-purple-500",
+    "ownerInitials": "St",
+    "source": "Bounty Lane",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-approvals-ui",
+    "column": "backlog",
+    "title": "Wire Approvals tab to data + markdown",
+    "description": "Surface docs/approvals entries in UI (list, detail, status) so Nate can approve inside Mission Control.",
+    "statusColor": "bg-cyan-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-load-meter",
+    "column": "backlog",
+    "title": "Add Mission Control load meter",
+    "description": "Scan tasks/experiments, assign story points per agent, and render color-coded availability tile.",
+    "statusColor": "bg-orange-400",
+    "ownerInitials": "Spl",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-activity-rail",
+    "column": "backlog",
+    "title": "Wire Activity rail to Supabase",
+    "description": "Replace JSON feed with Supabase activity_log + subscriptions for live agent updates.",
+    "statusColor": "bg-rose-300",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-task-triggers",
+    "column": "backlog",
+    "title": "Trigger agents on task status change",
+    "description": "Watch Supabase tasks updates and kick off Henry/Steve when column moves to In Progress.",
     "statusColor": "bg-amber-300",
     "ownerInitials": "H",
-    "source": "Clawdbot",
-    "timeAgo": "7 days"
-  },
-  {
-    "id": "task-3",
-    "column": "backlog",
-    "title": "Draft pitch for Treasury Flow Sentinel",
-    "description": "Outline alerting value prop for Apollo",
-    "statusColor": "bg-purple-300",
-    "ownerInitials": "A",
-    "source": "Agents",
-    "timeAgo": "5 days"
-  },
-  {
-    "id": "task-4",
-    "column": "backlog",
-    "title": "Prep Mission Control 15:00 UI spec handoff",
-    "description": "Link screenshots + DOM notes",
-    "statusColor": "bg-sky-300",
-    "ownerInitials": "H",
     "source": "Mission Control",
-    "timeAgo": "3 days"
-  },
-  {
-    "id": "task-5",
-    "column": "in-progress",
-    "title": "Ship TopBar metrics slice",
-    "description": "Match labels + purple completion metric",
-    "statusColor": "bg-emerald-300",
-    "ownerInitials": "H",
-    "source": "Mission Control",
-    "timeAgo": "2 days"
-  },
-  {
-    "id": "task-6",
-    "column": "in-progress",
-    "title": "Wire kanban shell across three columns",
-    "description": "Ensure spacing + layout is solid",
-    "statusColor": "bg-amber-400",
-    "ownerInitials": "A",
-    "source": "Ops Board",
-    "timeAgo": "1 day"
-  },
-  {
-    "id": "task-7",
-    "column": "in-progress",
-    "title": "Audit news ingestion sources",
-    "description": "Ready Brave/RSS mix for Radar",
-    "statusColor": "bg-purple-400",
-    "ownerInitials": "H",
-    "source": "News",
-    "timeAgo": "8 hours"
-  },
-  {
-    "id": "task-8",
-    "column": "rev",
-    "title": "Finalize Revenue Lab backlog structure",
-    "description": "Add confidence scores + tags",
-    "statusColor": "bg-sky-400",
-    "ownerInitials": "A",
-    "source": "Mission Control",
-    "timeAgo": "6 hours"
-  },
-  {
-    "id": "task-9",
-    "column": "rev",
-    "title": "QA live activity cards",
-    "description": "Ensure avatars + timestamps line up",
-    "statusColor": "bg-emerald-400",
-    "ownerInitials": "H",
-    "source": "Ops",
-    "timeAgo": "4 hours"
+    "timeAgo": "just now"
   }
 ]
