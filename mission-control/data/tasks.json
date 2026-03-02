@@ -118,5 +118,25 @@
     "ownerInitials": "Spl",
     "source": "Mission Control",
     "timeAgo": "just now"
+  },
+  {
+    "id": "task-activity-rail",
+    "column": "backlog",
+    "title": "Wire Activity rail to Supabase",
+    "description": "Replace JSON feed with Supabase activity_log + subscriptions for live agent updates.",
+    "statusColor": "bg-rose-300",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-task-triggers",
+    "column": "backlog",
+    "title": "Trigger agents on task status change",
+    "description": "Watch Supabase tasks updates and kick off Henry/Steve when column moves to In Progress.",
+    "statusColor": "bg-amber-300",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
   }
 ]
