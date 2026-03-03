@@ -1,0 +1,76 @@
+name: Auto-assign Mission Control backlog
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # every 30 minutes, gate in-job based on local time
+  workflow_dispatch:
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      AUTO_ASSIGN_LIMIT: ${{ vars.AUTO_ASSIGN_LIMIT }}
+      AUTO_ASSIGN_MAX_ACTIVE: ${{ vars.AUTO_ASSIGN_MAX_ACTIVE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Decide whether this window should run
+        id: window
+        run: |
+          tz="America/New_York"
+          hour=$(TZ=$tz date +%H)
+          minute=$(TZ=$tz date +%M)
+
+          should_run="false"
+          mode="sleep"
+
+          if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
+            if [ "$minute" -eq 0 ]; then
+              should_run="true"
+              mode="awake"
+            fi
+          elif [ "$hour" -eq 22 ]; then
+            if [ "$minute" -eq 0 ]; then
+              should_run="true"
+              mode="awake"
+            else
+              should_run="true"
+              mode="sleep"
+            fi
+          else
+            should_run="true"
+            mode="sleep"
+          fi
+
+          echo "should_run=${should_run}" >> "$GITHUB_OUTPUT"
+          echo "mode=${mode}" >> "$GITHUB_OUTPUT"
+          echo "Local time: $(TZ=$tz date) | should_run=${should_run} | mode=${mode}"
+
+      - name: Skip run (outside schedule)
+        if: steps.window.outputs.should_run != 'true'
+        run: echo "Sleeping this half-hour window"
+
+      - name: Setup Node.js
+        if: steps.window.outputs.should_run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.window.outputs.should_run == 'true'
+        run: npm ci
+
+      - name: Run auto-assign worker
+        if: steps.window.outputs.should_run == 'true'
+        run: npm run worker:auto-assign
+
+      - name: Annotate completion
+        if: steps.window.outputs.should_run == 'true'
+        run: |
+          echo "Ran auto-assign worker during ${{ steps.window.outputs.mode }} window"

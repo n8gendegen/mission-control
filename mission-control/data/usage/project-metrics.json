@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "name": "Concierge MVP",
+      "revenue_usd": 18250,
+      "payout_usd": null,
+      "notes": "Deposits collected from first 5 concierge installs."
+    },
+    {
+      "name": "Bounty Lane",
+      "revenue_usd": 6200,
+      "payout_usd": 4100,
+      "notes": "Closed bounties + outstanding offers."
+    },
+    {
+      "name": "Mission Control V2",
+      "revenue_usd": 0,
+      "payout_usd": null,
+      "notes": "Internal build; track cost only for now."
+    },
+    {
+      "name": "Revenue Lab",
+      "revenue_usd": 4800,
+      "payout_usd": null,
+      "notes": "Workshop + advisory retainers."
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{"timestamp":"2026-03-01T13:22:14Z","provider":"openai","model":"gpt-4.1","agent":"Henry","project":"Mission Control V2","tokens":4200,"cost_usd":0.31,"task_url":"https://mission-control/tasks/task-data-spike"}
+{"timestamp":"2026-03-01T15:47:02Z","provider":"openai","model":"gpt-4.1","agent":"Spy","project":"Bounty Lane","tokens":3600,"cost_usd":0.27,"task_url":"https://mission-control/tasks/task-bounty"}
+{"timestamp":"2026-03-01T20:05:51Z","provider":"openai","model":"gpt-4o-mini","agent":"Steve","project":"Concierge MVP","tokens":2500,"cost_usd":0.11}
+{"timestamp":"2026-02-29T17:11:03Z","provider":"anthropic","model":"claude-3.5-sonnet","agent":"Alex","project":"Revenue Lab","tokens":4100,"cost_usd":0.36}
