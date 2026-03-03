@@ -138,5 +138,25 @@
     "ownerInitials": "H",
     "source": "Mission Control",
     "timeAgo": "just now"
+  },
+  {
+    "id": "task-backlog-worker",
+    "column": "backlog",
+    "title": "Spec Supabase worker for backlog sweeps",
+    "description": "Design a Supabase Edge Function/worker that scans backlog items and triggers sub-agent pickup automatically.",
+    "statusColor": "bg-blue-400",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-data-tab-polish",
+    "column": "backlog",
+    "title": "Finish Data tab polish + alerts",
+    "description": "Add live filters, anomaly surfacing into Tasks/Approvals, and UX polish once ingestion pipeline is stable.",
+    "statusColor": "bg-emerald-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
   }
 ]

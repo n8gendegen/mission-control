@@ -43,3 +43,41 @@ PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:visual
 
 Or rely on `npm run test:visual` after starting `npm run start` in another terminal.
 
+## Auto-Assignment Worker
+
+The backlog triage worker lives at `scripts/auto-assign-tasks.mjs`. It scans unassigned backlog / rev tasks, routes each one to the right agent (lane + keyword heuristics + capacity), updates the task owner/status, and logs the decision in `activity_log`.
+
+### Running manually
+
+```bash
+cd mission-control
+npm run worker:auto-assign -- --dry-run   # inspect output only
+npm run worker:auto-assign               # assign for real (requires SUPABASE_SERVICE_ROLE_KEY)
+```
+
+Env vars:
+
+- `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`)
+- `SUPABASE_SERVICE_ROLE_KEY`
+- Optional: `AUTO_ASSIGN_LIMIT`, `AUTO_ASSIGN_MAX_ACTIVE`
+
+Use a cron / scheduled function (10–30 min cadence) to call `node scripts/auto-assign-tasks.mjs` so backlog tasks keep flowing without manual triage.
+
+### GitHub Actions scheduler
+
+The workflow `.github/workflows/auto-assign.yml` runs every 30 minutes, but a gating step ensures:
+
+- **Awake window (06:00–22:00 America/New_York):** executes only on the top of the hour.
+- **Sleep window (22:30–05:30):** executes every half hour.
+
+Provide the following repo secrets/variables:
+
+| Type  | Name                        | Purpose                                  |
+|-------|-----------------------------|------------------------------------------|
+| Secret| `SUPABASE_URL`              | Supabase project URL                     |
+| Secret| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for task updates        |
+| Var   | `AUTO_ASSIGN_LIMIT`         | Optional per-run candidate limit override|
+| Var   | `AUTO_ASSIGN_MAX_ACTIVE`    | Optional override for load balancing     |
+
+Trigger manually anytime via the *Actions → Auto-assign Mission Control backlog* workflow.
+
