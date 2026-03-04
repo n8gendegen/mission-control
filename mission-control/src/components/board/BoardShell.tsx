@@ -97,7 +97,11 @@ export function BoardShell() {
   const tasksByColumn = useMemo(() => {
     return tasks.reduce<Record<TaskColumn, TaskRecord[]>>(
       (acc, task) => {
-        acc[task.column].push(task);
+        const column = (task.column ?? "backlog") as TaskColumn;
+        if (!acc[column]) {
+          acc[column] = [];
+        }
+        acc[column].push(task);
         return acc;
       },
       { backlog: [], "in-progress": [], rev: [] }
