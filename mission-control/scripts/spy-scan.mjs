@@ -56,6 +56,12 @@ function repoHtmlUrl(apiUrl) {
   return apiUrl.replace('api.github.com/repos', 'github.com');
 }
 
+function repoFullName(apiUrl) {
+  if (!apiUrl) return null;
+  const segments = apiUrl.split('repos/')[1];
+  return segments ?? null;
+}
+
 function computeFitScore({ payoutUsd, tags = [] }) {
   let score = 0;
   if (payoutUsd) {
@@ -126,6 +132,8 @@ function normalizeIssue(issue, source) {
     payoutUsd,
     listingUrl: issue.html_url,
     repoUrl: repoHtmlUrl(issue.repository_url),
+    repoFullName: repoFullName(issue.repository_url),
+    issueNumber: issue.number,
     fitScore,
     metadata: {
       sourceQuery: source.query,
@@ -148,14 +156,16 @@ async function upsertSpyOpportunity(client, opportunity) {
     opportunity.payoutUsd,
     opportunity.listingUrl,
     opportunity.repoUrl,
+    opportunity.repoFullName,
+    opportunity.issueNumber,
     opportunity.fitScore,
     JSON.stringify(opportunity.metadata ?? {}),
   ];
 
   const { rows } = await client.query(
     `insert into spy_opportunities 
-      (source, external_id, title, summary, tags, payout_usd, listing_url, repo_url, fit_score, metadata)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      (source, external_id, title, summary, tags, payout_usd, listing_url, repo_url, repo_full_name, issue_number, fit_score, metadata)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
      on conflict (source, external_id) do update set
        title = excluded.title,
        summary = excluded.summary,
@@ -163,6 +173,8 @@ async function upsertSpyOpportunity(client, opportunity) {
        payout_usd = excluded.payout_usd,
        listing_url = excluded.listing_url,
        repo_url = excluded.repo_url,
+       repo_full_name = excluded.repo_full_name,
+       issue_number = excluded.issue_number,
        fit_score = excluded.fit_score,
        metadata = excluded.metadata,
        updated_at = timezone('utc', now())

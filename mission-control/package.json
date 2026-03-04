@@ -11,7 +11,8 @@
     "worker:auto-assign": "node scripts/auto-assign-tasks.mjs",
     "db:migrate": "supabase db push --db-url $SUPABASE_DB_URL",
     "worker:dispatch-agent": "node scripts/agent-dispatcher.mjs",
-    "worker:spy-scan": "node scripts/spy-scan.mjs"
+    "worker:spy-scan": "node scripts/spy-scan.mjs",
+    "worker:approval-dispatcher": "node scripts/approval-dispatcher.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
