@@ -1,3 +1,6 @@
+import { AgentHealthTile } from "../health/AgentHealthTile";
+import { getAgentHealth } from "../../lib/data/agentHealth";
+
 const metrics = [
   { label: "This week", value: "3", accent: "text-emerald-300" },
   { label: "In progress", value: "3", accent: "text-sky-300" },
@@ -5,7 +8,8 @@ const metrics = [
   { label: "Completion", value: "40%", accent: "text-violet-300" },
 ];
 
-export function TopBar() {
+export async function TopBar() {
+  const agentHealth = await getAgentHealth();
   return (
     <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
       <div className="flex items-center justify-between gap-8">
@@ -35,6 +39,9 @@ export function TopBar() {
             <p className="text-xs uppercase tracking-[0.4em] text-white/40">{metric.label}</p>
           </div>
         ))}
+      </div>
+      <div className="mt-6">
+        <AgentHealthTile records={agentHealth} />
       </div>
       <div className="mt-6 flex items-center justify-between">
         <button className="rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow shadow-violet-500/40">
