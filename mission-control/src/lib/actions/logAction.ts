@@ -1,3 +1,5 @@
+import { getSupabaseClient } from "../supabase/client";
+
 export type LoggableAction = "ack" | "snooze" | "complete";
 
 export async function logAction({
@@ -11,15 +13,20 @@ export async function logAction({
   action: LoggableAction;
   metadata?: Record<string, unknown>;
 }) {
-  const response = await fetch("/api/actions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entityType, entityId, action, metadata }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to log action: ${response.status}`);
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error("Supabase client is not configured");
   }
 
-  return response.json();
+  const { error } = await client.from("action_log").insert({
+    entity_type: entityType,
+    entity_id: entityId,
+    action,
+    actor: "Nate",
+    metadata: metadata ?? {},
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

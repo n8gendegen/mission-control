@@ -24,3 +24,9 @@ create policy "Action log writable by service" on public.action_log
   for insert
   to service_role
   with check (true);
+drop policy if exists "Action log writable by anon" on public.action_log;
+create policy "Action log writable by anon" on public.action_log
+  for insert
+  to anon
+  with check (true);
+
