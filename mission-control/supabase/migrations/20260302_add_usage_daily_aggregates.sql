@@ -24,6 +24,8 @@ create table if not exists public.usage_daily_aggregates (
 create index if not exists usage_daily_aggregates_date_idx on public.usage_daily_aggregates (date desc);
 create index if not exists usage_daily_aggregates_provider_idx on public.usage_daily_aggregates (provider);
 
+drop trigger if exists usage_daily_aggregates_set_updated_at on public.usage_daily_aggregates;
+
 create trigger usage_daily_aggregates_set_updated_at
   before update on public.usage_daily_aggregates
   for each row
@@ -31,6 +33,7 @@ create trigger usage_daily_aggregates_set_updated_at
 
 alter table public.usage_daily_aggregates enable row level security;
 
+drop policy if exists "usage_aggregates_allow_read" on public.usage_daily_aggregates;
 create policy "usage_aggregates_allow_read"
   on public.usage_daily_aggregates for select
   using (true);

@@ -1,5 +1,85 @@
 [
   {
+    "id": "task-1772577155476-notifications-digest",
+    "column": "backlog",
+    "title": "Notifications digest panel",
+    "description": "Summarize external pings (Slack/Jira/email) that were triaged into MC.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "Sweeper",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155475-command-palette",
+    "column": "backlog",
+    "title": "Command palette shortcuts",
+    "description": "Add quick commands for running key automations (auto-assign, spy sweep, ingestion).",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155474-revenue-funnel",
+    "column": "backlog",
+    "title": "Revenue funnel widget",
+    "description": "Track Revenue Lab experiments by stage with EV and owner state.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "Sp",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155473-approvals-roi",
+    "column": "backlog",
+    "title": "Approvals ROI snapshot",
+    "description": "Show pending approvals with payout, time, profit, and recommended agent inline.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155472-triage-heatmap",
+    "column": "backlog",
+    "title": "Backlog triage heatmap",
+    "description": "Visualize tasks per lane vs owner capacity to highlight overload before manual triage.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "Spl",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155471-live-activity-filters",
+    "column": "backlog",
+    "title": "Enhance Live Activity rail filters",
+    "description": "Add All/Tasks/Infra filters to the Supabase-backed activity stream.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155470-alert-inbox",
+    "column": "backlog",
+    "title": "Add Alert Inbox module",
+    "description": "Surface actionable alerts (anomalies, failures) with quick route-to-task/approval actions.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-1772577155469-agent-health",
+    "column": "backlog",
+    "title": "Add Agent Health tile",
+    "description": "Show last-run status (pass/fail + timestamp) for each automation on the dashboard.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
     "id": "task-concierge-offer",
     "column": "backlog",
     "title": "Define Clawbot Concierge offer & tiers",
@@ -156,6 +236,16 @@
     "description": "Add live filters, anomaly surfacing into Tasks/Approvals, and UX polish once ingestion pipeline is stable.",
     "statusColor": "bg-emerald-500",
     "ownerInitials": "H",
+    "source": "Mission Control",
+    "timeAgo": "just now"
+  },
+  {
+    "id": "task-supabase-migrations",
+    "column": "backlog",
+    "title": "Normalize Supabase migration versions for CLI",
+    "description": "Rename the legacy 8-digit Supabase migration files or repair schema_migrations so `supabase db push` can run cleanly without duplicates.",
+    "statusColor": "bg-slate-500",
+    "ownerInitials": "J",
     "source": "Mission Control",
     "timeAgo": "just now"
   }

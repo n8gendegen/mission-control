@@ -81,3 +81,27 @@ Provide the following repo secrets/variables:
 
 Trigger manually anytime via the *Actions → Auto-assign Mission Control backlog* workflow.
 
+
+## Supabase Activity Log
+
+Mission Control now stores activity events in Supabase so the sidebar rail can stream real-time updates. Configure the following environment variables locally (e.g. in `.env.local`) and in Vercel/GitHub:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_DB_URL` (Postgres connection string for migrations)
+
+### Applying migrations
+
+Add new SQL files under `supabase/migrations/` and push them with:
+
+```bash
+npm run db:migrate
+```
+
+The script simply proxies `supabase db push --db-url $SUPABASE_DB_URL`, so no secrets are ever committed.
+
+### Logging helper
+
+Use `shared/log-activity.js` (Node/worker contexts) or `src/lib/activity/logActivity.ts` (Next.js data layer) to write/read `activity_log`. Both helpers pull credentials from the env vars above—no hard-coded URLs or keys.
+

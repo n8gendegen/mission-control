@@ -1,8 +1,6 @@
-import activityData from "../../../data/activity.json";
-import type { ActivityRecord } from "./types";
+import type { ActivityLogEntry } from "../activity/logActivity";
+import { fetchRecentActivity } from "../activity/logActivity";
 
-const activity = activityData as ActivityRecord[];
-
-export function getActivityFeed(): ActivityRecord[] {
-  return activity;
+export async function getActivityFeed(limit = 25): Promise<ActivityLogEntry[]> {
+  return fetchRecentActivity(limit);
 }
