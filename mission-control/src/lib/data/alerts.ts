@@ -9,7 +9,13 @@ export type AlertItem = {
   description?: string;
   source: string;
   timestamp: string;
+  lastAction?: {
+    action: string;
+    created_at: string;
+  };
 };
+
+const SNOOZE_WINDOW_MS = 30 * 60 * 1000;
 
 function toAlertSeverity(status: string | null | undefined): AlertSeverity {
   if (!status) return "info";
@@ -64,7 +70,46 @@ export async function getAlertInbox(limit = 10): Promise<AlertItem[]> {
     }
   }
 
+  if (alerts.length === 0) {
+    return [];
+  }
+
+  const ids = alerts.map((alert) => alert.id);
+  const actionLog = await client
+    .from("action_log")
+    .select("entity_id, action, created_at")
+    .eq("entity_type", "alert")
+    .in("entity_id", ids);
+
+  const latestAction = new Map<string, { action: string; created_at: string }>();
+
+  if (!actionLog.error && actionLog.data) {
+    for (const entry of actionLog.data) {
+      const current = latestAction.get(entry.entity_id);
+      if (!current || new Date(entry.created_at) > new Date(current.created_at)) {
+        latestAction.set(entry.entity_id, entry);
+      }
+    }
+  }
+
+  const now = Date.now();
+
   return alerts
+    .filter((alert) => {
+      const action = latestAction.get(alert.id);
+      if (!action) return true;
+      if (action.action === "ack") {
+        return false;
+      }
+      if (action.action === "snooze") {
+        const age = now - new Date(action.created_at).getTime();
+        if (age < SNOOZE_WINDOW_MS) {
+          return false;
+        }
+      }
+      alert.lastAction = action;
+      return true;
+    })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
 }

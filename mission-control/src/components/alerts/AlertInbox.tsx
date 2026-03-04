@@ -1,4 +1,8 @@
+'use client';
+
 import type { AlertItem } from "../../lib/data/alerts";
+import { useState } from "react";
+import { logAction } from "../../lib/actions/logAction";
 
 const SEVERITY_STYLES: Record<string, { badge: string; border: string }> = {
   critical: {
@@ -27,6 +31,29 @@ function formatTimestamp(value: string) {
 }
 
 export function AlertInbox({ alerts }: { alerts: AlertItem[] }) {
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState<string | null>(null);
+
+  const visibleAlerts = alerts.filter((alert) => !hiddenIds.has(alert.id));
+
+  async function handleAction(alertId: string, action: "ack" | "snooze") {
+    setPending(alertId);
+    try {
+      await logAction({ entityType: "alert", entityId: alertId, action });
+      setHiddenIds((prev) => {
+        const next = new Set(prev);
+        next.add(alertId);
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to log alert action", error);
+    } finally {
+      setPending((current) => (current === alertId ? null : current));
+    }
+  }
+
+  const list = visibleAlerts;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -35,17 +62,17 @@ export function AlertInbox({ alerts }: { alerts: AlertItem[] }) {
           <p className="text-sm text-white/60">Critical items that need a human nudge</p>
         </div>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
-          {alerts.length} open
+          {list.length} open
         </span>
       </div>
 
-      {alerts.length === 0 && (
+      {list.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/60">
           All clear. New alerts will land here automatically.
         </div>
       )}
 
-      {alerts.map((alert) => {
+      {list.map((alert) => {
         const styles = SEVERITY_STYLES[alert.severity] ?? SEVERITY_STYLES.info;
         return (
           <article
@@ -66,13 +93,26 @@ export function AlertInbox({ alerts }: { alerts: AlertItem[] }) {
               </span>
             </header>
             {alert.description && <p className="mt-3 text-white/70">{alert.description}</p>}
+            {alert.lastAction && (
+              <p className="mt-1 text-xs text-white/40">
+                Last action: {alert.lastAction.action} at {formatTimestamp(alert.lastAction.created_at)}
+              </p>
+            )}
             <div className="mt-3 flex items-center justify-between text-xs text-white/40">
               <span>{formatTimestamp(alert.timestamp)}</span>
               <div className="flex gap-2">
-                <button className="rounded-full border border-white/10 px-3 py-1 text-white/70">
+                <button
+                  className="rounded-full border border-white/10 px-3 py-1 text-white/70 disabled:opacity-40"
+                  disabled={pending === alert.id}
+                  onClick={() => handleAction(alert.id, "ack")}
+                >
                   Ack
                 </button>
-                <button className="rounded-full border border-white/10 px-3 py-1 text-white/50">
+                <button
+                  className="rounded-full border border-white/10 px-3 py-1 text-white/50 disabled:opacity-40"
+                  disabled={pending === alert.id}
+                  onClick={() => handleAction(alert.id, "snooze")}
+                >
                   Snooze
                 </button>
               </div>
