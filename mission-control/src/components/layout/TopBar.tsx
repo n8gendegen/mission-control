@@ -1,5 +1,7 @@
 import { AgentHealthTile } from "../health/AgentHealthTile";
+import { AgentWorkSessionsPanel } from "../health/AgentWorkSessionsPanel";
 import { getAgentHealth } from "../../lib/data/agentHealth";
+import { getActiveWorkSessions } from "../../lib/data/workSessions";
 
 const metrics = [
   { label: "This week", value: "3", accent: "text-emerald-300" },
@@ -9,7 +11,7 @@ const metrics = [
 ];
 
 export async function TopBar() {
-  const agentHealth = await getAgentHealth();
+  const [agentHealth, workSessions] = await Promise.all([getAgentHealth(), getActiveWorkSessions()]);
   return (
     <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
       <div className="flex items-center justify-between gap-8">
@@ -40,8 +42,9 @@ export async function TopBar() {
           </div>
         ))}
       </div>
-      <div className="mt-6">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <AgentHealthTile records={agentHealth} />
+        <AgentWorkSessionsPanel sessions={workSessions} />
       </div>
       <div className="mt-6 flex items-center justify-between">
         <button className="rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow shadow-violet-500/40">
