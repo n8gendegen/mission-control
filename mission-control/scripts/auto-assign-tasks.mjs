@@ -128,6 +128,51 @@ async function recordAgentHeartbeat({ client, status, startedAt, errorMessage, r
   }
 }
 
+async function triggerAgentWork({ client, task, agent, reason }) {
+  if (!client) return;
+  try {
+    const payload = {
+      task_id: task.id,
+      task_slug: task.slug ?? null,
+      task_title: task.title ?? null,
+      agent_name: agent.name,
+      status: "triggered",
+      triggered_at: new Date().toISOString(),
+      metadata: {
+        reason,
+        column_from: task.column_id,
+      },
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: workError } = await client
+      .from("agent_work_sessions")
+      .upsert(payload, { onConflict: "task_id,agent_name" });
+
+    if (workError) {
+      console.error("Failed to queue agent work:", workError.message ?? workError);
+    } else {
+      console.log(`[trigger] ${task.slug ?? task.title ?? task.id} -> ${agent.name}`);
+    }
+
+    await logActivity({
+      eventType: "agent_work_triggered",
+      summary: `${agent.name} queued ${task.slug ?? task.title ?? task.id}`,
+      actor: "AutoRouter",
+      source: "auto-assign",
+      entityType: "task",
+      entityId: task.id,
+      metadata: {
+        reason,
+        agent: agent.name,
+        slug: task.slug,
+      },
+    });
+  } catch (triggerErr) {
+    console.error("Failed to trigger agent work:", triggerErr.message ?? triggerErr);
+  }
+}
+
 function parseArgs(argv) {
   const args = { limit: DEFAULT_LIMIT, dryRun: false };
   for (let i = 0; i < argv.length; i += 1) {
@@ -299,6 +344,8 @@ async function assignTask({ client, task, agent, reason, dryRun }) {
       slug: task.slug,
     },
   });
+
+  await triggerAgentWork({ client, task, agent, reason });
   return { updated: true };
 }
 
