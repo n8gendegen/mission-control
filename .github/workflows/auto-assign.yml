@@ -61,6 +61,11 @@ jobs:
         run: npm run worker:auto-assign
         working-directory: mission-control
 
+      - name: Trigger agent dispatcher
+        if: steps.window.outputs.should_run == 'true'
+        run: npm run worker:dispatch-agent
+        working-directory: mission-control
+
       - name: Annotate completion
         if: steps.window.outputs.should_run == 'true'
         run: |
