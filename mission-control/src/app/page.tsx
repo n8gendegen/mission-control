@@ -3,6 +3,8 @@ import { BoardShell } from "../components/board/BoardShell";
 import { Sidebar } from "../components/layout/Sidebar";
 import { TopBar } from "../components/layout/TopBar";
 
+export const revalidate = 0;
+
 export default function Home() {
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
