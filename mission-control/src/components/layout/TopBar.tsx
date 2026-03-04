@@ -2,16 +2,70 @@ import { AgentHealthTile } from "../health/AgentHealthTile";
 import { AgentWorkSessionsPanel } from "../health/AgentWorkSessionsPanel";
 import { getAgentHealth } from "../../lib/data/agentHealth";
 import { getActiveWorkSessions } from "../../lib/data/workSessions";
+import { getSupabaseClient } from "../../lib/supabase/client";
 
-const metrics = [
-  { label: "This week", value: "3", accent: "text-emerald-300" },
-  { label: "In progress", value: "3", accent: "text-sky-300" },
-  { label: "Total", value: "25", accent: "text-orange-300" },
-  { label: "Completion", value: "40%", accent: "text-violet-300" },
-];
+type TaskMetrics = {
+  total: number;
+  inProgress: number;
+  completed: number;
+  completedThisWeek: number;
+  completionPct: number;
+};
+
+async function getTaskMetrics(): Promise<TaskMetrics> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { total: 0, inProgress: 0, completed: 0, completedThisWeek: 0, completionPct: 0 };
+  }
+
+  const { data, error } = await client.from("tasks").select("column_id, updated_at, created_at");
+
+  if (error || !data) {
+    console.error("Failed to load task metrics", error);
+    return { total: 0, inProgress: 0, completed: 0, completedThisWeek: 0, completionPct: 0 };
+  }
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  let inProgress = 0;
+  let completed = 0;
+  let completedThisWeek = 0;
+
+  data.forEach((task) => {
+    const updatedAt = task.updated_at ? new Date(task.updated_at) : null;
+    if (task.column_id === "in-progress") {
+      inProgress += 1;
+    }
+    if (task.column_id === "rev") {
+      completed += 1;
+      if (updatedAt && updatedAt >= sevenDaysAgo) {
+        completedThisWeek += 1;
+      }
+    }
+  });
+
+  const total = data.length;
+  const completionPct = total ? Math.round((completed / total) * 100) : 0;
+
+  return { total, inProgress, completed, completedThisWeek, completionPct };
+}
+
+function MetricCard({ label, value, accent }: { label: string; value: string | number; accent: string }) {
+  return (
+    <div className="rounded-2xl border border-white/5 bg-[#11131a] px-4 py-3">
+      <p className={`text-3xl font-semibold ${accent}`}>{value}</p>
+      <p className="text-xs uppercase tracking-[0.4em] text-white/40">{label}</p>
+    </div>
+  );
+}
 
 export async function TopBar() {
-  const [agentHealth, workSessions] = await Promise.all([getAgentHealth(), getActiveWorkSessions()]);
+  const [agentHealth, workSessions, taskMetrics] = await Promise.all([
+    getAgentHealth(),
+    getActiveWorkSessions(),
+    getTaskMetrics(),
+  ]);
   return (
     <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
       <div className="flex items-center justify-between gap-8">
@@ -32,15 +86,10 @@ export async function TopBar() {
         </div>
       </div>
       <div className="mt-6 grid grid-cols-4 gap-4">
-        {metrics.map((metric) => (
-          <div
-            key={metric.label}
-            className="rounded-2xl border border-white/5 bg-[#11131a] px-4 py-3"
-          >
-            <p className={`text-3xl font-semibold ${metric.accent}`}>{metric.value}</p>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/40">{metric.label}</p>
-          </div>
-        ))}
+        <MetricCard label="Completed (7d)" value={taskMetrics.completedThisWeek} accent="text-emerald-300" />
+        <MetricCard label="In progress" value={taskMetrics.inProgress} accent="text-sky-300" />
+        <MetricCard label="Total" value={taskMetrics.total} accent="text-orange-300" />
+        <MetricCard label="Completion" value={`${taskMetrics.completionPct}%`} accent="text-violet-300" />
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <AgentHealthTile records={agentHealth} />
