@@ -81,6 +81,52 @@ const APPROVAL_LANES = new Set(["approvals", "approval queue"]);
 const APPROVAL_KEYWORDS = [/requires approval/i, /awaiting approval/i];
 
 const DEFAULT_FALLBACK = ["Henry", "Splitter"];
+const WORKER_AGENT_ID = "auto_assign";
+const WORKER_AGENT_NAME = "Auto Assign";
+const WORKER_LANE = "mission control";
+const DEFAULT_HEARTBEAT_INTERVAL_MINUTES = Number(
+  process.env.AUTO_ASSIGN_HEARTBEAT_INTERVAL_MINUTES || 15
+) || 15;
+
+const heartbeatContext = {
+  client: null,
+  startedAt: Date.now(),
+};
+
+function estimateNextRunEta(minutes = DEFAULT_HEARTBEAT_INTERVAL_MINUTES) {
+  const next = new Date(Date.now() + minutes * 60 * 1000);
+  return next.toISOString();
+}
+
+async function recordAgentHeartbeat({ client, status, startedAt, errorMessage, results, dryRun }) {
+  if (!client) return;
+  try {
+    const durationMs = Date.now() - startedAt;
+    const payload = {
+      agent_id: WORKER_AGENT_ID,
+      agent_name: WORKER_AGENT_NAME,
+      lane: WORKER_LANE,
+      status,
+      last_run_at: new Date(startedAt).toISOString(),
+      last_duration_ms: durationMs,
+      next_run_eta: estimateNextRunEta(),
+      error_context: errorMessage ?? null,
+      metadata: {
+        assigned: results?.assigned.length ?? 0,
+        approvals_blocked: results?.approvals.length ?? 0,
+        skipped: results?.skipped.length ?? 0,
+        dry_run: Boolean(dryRun),
+      },
+      updated_at: new Date().toISOString(),
+    };
+
+    await client
+      .from("agent_health_status")
+      .upsert(payload, { onConflict: "agent_id" });
+  } catch (heartbeatErr) {
+    console.error("Failed to record agent heartbeat:", heartbeatErr.message ?? heartbeatErr);
+  }
+}
 
 function parseArgs(argv) {
   const args = { limit: DEFAULT_LIMIT, dryRun: false };
@@ -257,8 +303,11 @@ async function assignTask({ client, task, agent, reason, dryRun }) {
 }
 
 async function main() {
+  const startedAt = Date.now();
   const args = parseArgs(process.argv.slice(2));
   const client = buildClient(args);
+  heartbeatContext.client = client;
+  heartbeatContext.startedAt = startedAt;
   const dryRun = Boolean(args.dryRun);
 
   const [agentLoads, candidates] = await Promise.all([
@@ -300,12 +349,28 @@ async function main() {
     `Auto-assign complete. assigned=${results.assigned.length} approvals_blocked=${results.approvals.length} skipped=${results.skipped.length}`
   );
 
+  await recordAgentHeartbeat({
+    client,
+    status: dryRun ? "dry_run" : "ok",
+    startedAt,
+    results,
+    dryRun,
+  });
+
   if (dryRun) {
     console.log("Dry-run mode: no changes saved.");
   }
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
   console.error("Auto-assign worker failed:", err);
+  await recordAgentHeartbeat({
+    client: heartbeatContext.client,
+    status: "error",
+    startedAt: heartbeatContext.startedAt,
+    errorMessage: err.message ?? String(err),
+    results: null,
+    dryRun: false,
+  });
   process.exit(1);
 });
