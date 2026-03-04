@@ -10,12 +10,15 @@
     "test:visual": "playwright test",
     "worker:auto-assign": "node scripts/auto-assign-tasks.mjs",
     "db:migrate": "supabase db push --db-url $SUPABASE_DB_URL",
-    "worker:dispatch-agent": "node scripts/agent-dispatcher.mjs"
+    "worker:dispatch-agent": "node scripts/agent-dispatcher.mjs",
+    "worker:spy-scan": "node scripts/spy-scan.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
+    "dotenv": "^17.3.1",
     "nanoid": "5.0.7",
     "next": "14.1.0",
+    "pg": "^8.19.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
