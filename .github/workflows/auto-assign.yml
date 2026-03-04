@@ -26,25 +26,15 @@ jobs:
           hour=$(TZ=$tz date +%H)
           minute=$(TZ=$tz date +%M)
 
-          should_run="false"
-          mode="sleep"
+          should_run="true"
+          mode="manual"
 
-          if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
-            if [ "$minute" -eq 0 ]; then
-              should_run="true"
-              mode="awake"
-            fi
-          elif [ "$hour" -eq 22 ]; then
-            if [ "$minute" -eq 0 ]; then
-              should_run="true"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
               mode="awake"
             else
-              should_run="true"
               mode="sleep"
             fi
-          else
-            should_run="true"
-            mode="sleep"
           fi
 
           echo "should_run=${should_run}" >> "$GITHUB_OUTPUT"
@@ -65,10 +55,12 @@ jobs:
       - name: Install dependencies
         if: steps.window.outputs.should_run == 'true'
         run: npm ci
+        working-directory: mission-control
 
       - name: Run auto-assign worker
         if: steps.window.outputs.should_run == 'true'
         run: npm run worker:auto-assign
+        working-directory: mission-control
 
       - name: Annotate completion
         if: steps.window.outputs.should_run == 'true'
