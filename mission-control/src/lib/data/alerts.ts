@@ -12,6 +12,7 @@ export type AlertItem = {
   lastAction?: {
     action: string;
     created_at: string;
+    metadata?: Record<string, unknown> | null;
   };
 };
 
@@ -77,17 +78,17 @@ export async function getAlertInbox(limit = 10): Promise<AlertItem[]> {
   const ids = alerts.map((alert) => alert.id);
   const actionLog = await client
     .from("action_log")
-    .select("entity_id, action, created_at")
+    .select("entity_id, action, created_at, metadata")
     .eq("entity_type", "alert")
     .in("entity_id", ids);
 
-  const latestAction = new Map<string, { action: string; created_at: string }>();
+  const latestAction = new Map<string, { action: string; created_at: string; metadata?: Record<string, unknown> }>();
 
   if (!actionLog.error && actionLog.data) {
     for (const entry of actionLog.data) {
       const current = latestAction.get(entry.entity_id);
       if (!current || new Date(entry.created_at) > new Date(current.created_at)) {
-        latestAction.set(entry.entity_id, entry);
+        latestAction.set(entry.entity_id, entry as { action: string; created_at: string; metadata?: Record<string, unknown> });
       }
     }
   }
@@ -102,9 +103,17 @@ export async function getAlertInbox(limit = 10): Promise<AlertItem[]> {
         return false;
       }
       if (action.action === "snooze") {
-        const age = now - new Date(action.created_at).getTime();
-        if (age < SNOOZE_WINDOW_MS) {
-          return false;
+        const snoozeUntil = (action.metadata?.snooze_until as string | undefined) ?? null;
+        if (snoozeUntil) {
+          const resumeAt = new Date(snoozeUntil).getTime();
+          if (resumeAt > now) {
+            return false;
+          }
+        } else {
+          const age = now - new Date(action.created_at).getTime();
+          if (age < SNOOZE_WINDOW_MS) {
+            return false;
+          }
         }
       }
       alert.lastAction = action;

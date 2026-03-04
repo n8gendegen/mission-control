@@ -36,19 +36,28 @@ export function AlertInbox({ alerts }: { alerts: AlertItem[] }) {
 
   const visibleAlerts = alerts.filter((alert) => !hiddenIds.has(alert.id));
 
-  async function handleAction(alertId: string, action: "ack" | "snooze") {
-    setPending(alertId);
+  async function handleAction(alert: AlertItem, action: "ack" | "snooze") {
+    setPending(alert.id);
+    const metadata: Record<string, unknown> = {
+      label: alert.title,
+      source: alert.source,
+      severity: alert.severity,
+    };
+    if (action === "snooze") {
+      metadata.snooze_until = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    }
+
     try {
-      await logAction({ entityType: "alert", entityId: alertId, action });
+      await logAction({ entityType: "alert", entityId: alert.id, action, metadata });
       setHiddenIds((prev) => {
         const next = new Set(prev);
-        next.add(alertId);
+        next.add(alert.id);
         return next;
       });
     } catch (error) {
       console.error("Failed to log alert action", error);
     } finally {
-      setPending((current) => (current === alertId ? null : current));
+      setPending((current) => (current === alert.id ? null : current));
     }
   }
 
@@ -93,25 +102,35 @@ export function AlertInbox({ alerts }: { alerts: AlertItem[] }) {
               </span>
             </header>
             {alert.description && <p className="mt-3 text-white/70">{alert.description}</p>}
-            {alert.lastAction && (
-              <p className="mt-1 text-xs text-white/40">
-                Last action: {alert.lastAction.action} at {formatTimestamp(alert.lastAction.created_at)}
-              </p>
-            )}
+            {alert.lastAction && (() => {
+              const snoozeUntil = alert.lastAction.metadata?.snooze_until as string | undefined;
+              if (snoozeUntil) {
+                return (
+                  <p className="mt-1 text-xs text-amber-300">
+                    Snoozed until {formatTimestamp(snoozeUntil)}
+                  </p>
+                );
+              }
+              return (
+                <p className="mt-1 text-xs text-white/40">
+                  Last action: {alert.lastAction.action} at {formatTimestamp(alert.lastAction.created_at)}
+                </p>
+              );
+            })()}
             <div className="mt-3 flex items-center justify-between text-xs text-white/40">
               <span>{formatTimestamp(alert.timestamp)}</span>
               <div className="flex gap-2">
                 <button
                   className="rounded-full border border-white/10 px-3 py-1 text-white/70 disabled:opacity-40"
                   disabled={pending === alert.id}
-                  onClick={() => handleAction(alert.id, "ack")}
+                  onClick={() => handleAction(alert, "ack")}
                 >
                   Ack
                 </button>
                 <button
                   className="rounded-full border border-white/10 px-3 py-1 text-white/50 disabled:opacity-40"
                   disabled={pending === alert.id}
-                  onClick={() => handleAction(alert.id, "snooze")}
+                  onClick={() => handleAction(alert, "snooze")}
                 >
                   Snooze
                 </button>

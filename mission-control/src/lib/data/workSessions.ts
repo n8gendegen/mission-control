@@ -10,7 +10,7 @@ export type AgentWorkSession = {
   triggered_at: string;
   started_at: string | null;
   completed_at: string | null;
-  lastAction?: { action: string; created_at: string };
+  lastAction?: { action: string; created_at: string; metadata?: Record<string, unknown> | null };
 };
 
 export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession[]> {
@@ -37,16 +37,16 @@ export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession
   const ids = sessions.map((session) => session.id);
   const actionLog = await client
     .from("action_log")
-    .select("entity_id, action, created_at")
+    .select("entity_id, action, created_at, metadata")
     .eq("entity_type", "agent_work_session")
     .in("entity_id", ids);
 
-  const latestAction = new Map<string, { action: string; created_at: string }>();
+  const latestAction = new Map<string, { action: string; created_at: string; metadata?: Record<string, unknown> }>();
   if (!actionLog.error && actionLog.data) {
     for (const entry of actionLog.data) {
       const current = latestAction.get(entry.entity_id);
       if (!current || new Date(entry.created_at) > new Date(current.created_at)) {
-        latestAction.set(entry.entity_id, entry);
+        latestAction.set(entry.entity_id, entry as { action: string; created_at: string; metadata?: Record<string, unknown> });
       }
     }
   }
@@ -54,8 +54,15 @@ export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession
   return sessions
     .filter((session) => {
       const action = latestAction.get(session.id);
-      if (action && action.action === "complete") {
+      if (!action) return true;
+      if (action.action === "complete") {
         return false;
+      }
+      if (action.action === "snooze") {
+        const snoozeUntil = action.metadata?.snooze_until as string | undefined;
+        if (snoozeUntil && new Date(snoozeUntil).getTime() > Date.now()) {
+          return false;
+        }
       }
       return true;
     })

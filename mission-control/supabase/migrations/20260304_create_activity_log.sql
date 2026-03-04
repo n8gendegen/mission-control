@@ -35,11 +35,17 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_publication_tables
-    WHERE pubname = "supabase_realtime"
-      AND schemaname = "public"
-      AND tablename = "activity_log"
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'activity_log'
   ) THEN
-    EXECUTE "alter publication supabase_realtime add table public.activity_log";
+    EXECUTE 'alter publication supabase_realtime add table public.activity_log';
   END IF;
 END
 $$;
+drop policy if exists "Activity log insertable by anon" on public.activity_log;
+create policy "Activity log insertable by anon" on public.activity_log
+  for insert
+  to anon
+  with check (true);
+

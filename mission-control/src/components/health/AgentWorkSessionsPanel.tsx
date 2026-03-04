@@ -4,6 +4,8 @@ import type { AgentWorkSession } from "../../lib/data/workSessions";
 import { useState } from "react";
 import { logAction } from "../../lib/actions/logAction";
 
+type LocalActionEntry = { action: string; created_at: string; metadata?: Record<string, unknown> };
+
 function relativeTime(from: string) {
   const date = new Date(from);
   const diffMs = Date.now() - date.getTime();
@@ -14,6 +16,13 @@ function relativeTime(from: string) {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function formatAbsolute(from: string) {
+  return new Date(from).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function statusStyles(status: string) {
@@ -31,7 +40,7 @@ function statusStyles(status: string) {
 export function AgentWorkSessionsPanel({ sessions }: { sessions: AgentWorkSession[] }) {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<string | null>(null);
-  const [localActions, setLocalActions] = useState<Map<string, { action: string; created_at: string }>>(
+  const [localActions, setLocalActions] = useState<Map<string, LocalActionEntry>>(
     new Map()
   );
 
@@ -39,24 +48,37 @@ export function AgentWorkSessionsPanel({ sessions }: { sessions: AgentWorkSessio
   const activeCount = list.filter((session) => session.status === "started").length;
   const waitingCount = list.length - activeCount;
 
-  async function handleAction(id: string, action: "ack" | "snooze" | "complete") {
-    setPending(id);
+  async function handleAction(session: AgentWorkSession, action: "ack" | "snooze" | "complete") {
+    setPending(session.id);
+    const metadata: Record<string, unknown> = {
+      label: session.task_title ?? session.task_slug ?? session.task_id,
+      agent: session.agent_name,
+    };
+    if (action === "snooze") {
+      metadata.snooze_until = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    }
+
     try {
-      await logAction({ entityType: "agent_work_session", entityId: id, action });
-      const entry = { action, created_at: new Date().toISOString() };
+      await logAction({
+        entityType: "agent_work_session",
+        entityId: session.id,
+        action,
+        metadata,
+      });
+      const entry = { action, created_at: new Date().toISOString(), metadata };
       if (action === "complete") {
         setHiddenIds((prev) => {
           const next = new Set(prev);
-          next.add(id);
+          next.add(session.id);
           return next;
         });
       } else {
-        setLocalActions((prev) => new Map(prev).set(id, entry));
+        setLocalActions((prev) => new Map(prev).set(session.id, entry));
       }
     } catch (error) {
       console.error("Failed to log work session action", error);
     } finally {
-      setPending((current) => (current === id ? null : current));
+      setPending((current) => (current === session.id ? null : current));
     }
   }
 
@@ -108,6 +130,14 @@ export function AgentWorkSessionsPanel({ sessions }: { sessions: AgentWorkSessio
               {(() => {
                 const action = localActions.get(session.id) ?? session.lastAction;
                 if (!action) return null;
+                const snoozeUntil = action.metadata?.snooze_until as string | undefined;
+                if (snoozeUntil) {
+                  return (
+                    <p className="mt-1 text-xs text-amber-300">
+                      Snoozed until {formatAbsolute(snoozeUntil)}
+                    </p>
+                  );
+                }
                 return (
                   <p className="mt-1 text-xs text-white/40">
                     Last action: {action.action} at {relativeTime(action.created_at)}
@@ -126,21 +156,21 @@ export function AgentWorkSessionsPanel({ sessions }: { sessions: AgentWorkSessio
                 <button
                   className="rounded-full border border-white/10 px-3 py-1 text-white/70 disabled:opacity-40"
                   disabled={pending === session.id}
-                  onClick={() => handleAction(session.id, "ack")}
+                  onClick={() => handleAction(session, "ack")}
                 >
                   Ack
                 </button>
                 <button
                   className="rounded-full border border-white/10 px-3 py-1 text-white/60 disabled:opacity-40"
                   disabled={pending === session.id}
-                  onClick={() => handleAction(session.id, "snooze")}
+                  onClick={() => handleAction(session, "snooze")}
                 >
                   Snooze
                 </button>
                 <button
                   className="rounded-full border border-emerald-400/40 px-3 py-1 text-emerald-200 disabled:opacity-40"
                   disabled={pending === session.id}
-                  onClick={() => handleAction(session.id, "complete")}
+                  onClick={() => handleAction(session, "complete")}
                 >
                   Complete
                 </button>
