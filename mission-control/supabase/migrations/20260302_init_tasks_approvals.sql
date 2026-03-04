@@ -133,14 +133,23 @@ alter table public.tasks enable row level security;
 alter table public.activity_log enable row level security;
 alter table public.approvals enable row level security;
 
+drop policy if exists "allow read" on public.tasks;
 create policy "allow read" on public.tasks for select using (true);
+drop policy if exists "allow read" on public.activity_log;
 create policy "allow read" on public.activity_log for select using (true);
+drop policy if exists "allow read" on public.approvals;
 create policy "allow read" on public.approvals for select using (true);
 
+drop policy if exists "service insert" on public.tasks;
 create policy "service insert" on public.tasks for insert with check (auth.uid() is not null);
+drop policy if exists "service insert" on public.activity_log;
 create policy "service insert" on public.activity_log for insert with check (auth.uid() is not null);
+drop policy if exists "service insert" on public.approvals;
 create policy "service insert" on public.approvals for insert with check (auth.uid() is not null);
 
+drop policy if exists "service update" on public.tasks;
 create policy "service update" on public.tasks for update using (auth.uid() is not null) with check (auth.uid() is not null);
+drop policy if exists "service update" on public.activity_log;
 create policy "service update" on public.activity_log for update using (auth.uid() is not null) with check (auth.uid() is not null);
+drop policy if exists "service update" on public.approvals;
 create policy "service update" on public.approvals for update using (auth.uid() is not null) with check (auth.uid() is not null);

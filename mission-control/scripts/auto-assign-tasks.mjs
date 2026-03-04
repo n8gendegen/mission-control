@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { createClient } from "@supabase/supabase-js";
+import { logActivity } from "../shared/log-activity.js";
 
-const DEFAULT_LIMIT = Number(process.env.AUTO_ASSIGN_LIMIT ?? 30);
-const DEFAULT_MAX_ACTIVE = Number(process.env.AUTO_ASSIGN_MAX_ACTIVE ?? 5);
+const DEFAULT_LIMIT = Number(process.env.AUTO_ASSIGN_LIMIT || 30) || 30;
+const DEFAULT_MAX_ACTIVE = Number(process.env.AUTO_ASSIGN_MAX_ACTIVE || 5) || 5;
 
 const AGENT_CONFIG = [
   {
@@ -237,23 +238,21 @@ async function assignTask({ client, task, agent, reason, dryRun }) {
   const { error } = await updateQuery;
   if (error) throw new Error(`Failed to update task ${task.slug ?? task.id}: ${error.message}`);
 
-  const detail = {
-    auto: true,
-    reason,
-    assigned_to: agent.name,
-    column_from: task.column_id,
-    column_to: updates.column_id ?? task.column_id,
-  };
-
-  const { error: logError } = await client.from("activity_log").insert({
-    task_id: task.id,
-    owner: "AutoRouter",
-    summary: `Auto-assigned to ${agent.name}`,
-    details: JSON.stringify(detail),
+  await logActivity({
+    eventType: "task_auto_assigned",
+    summary: `${task.title ?? task.slug ?? task.id} → ${agent.name}`,
+    actor: "AutoRouter",
+    source: "auto-assign",
+    entityType: "task",
+    entityId: task.id,
+    metadata: {
+      reason,
+      assigned_to: agent.name,
+      column_from: task.column_id,
+      column_to: updates.column_id ?? task.column_id,
+      slug: task.slug,
+    },
   });
-  if (logError) {
-    console.warn(`Failed to log activity for ${task.slug ?? task.id}: ${logError.message}`);
-  }
   return { updated: true };
 }
 

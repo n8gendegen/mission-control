@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:visual": "playwright test",
-    "worker:auto-assign": "node scripts/auto-assign-tasks.mjs"
+    "worker:auto-assign": "node scripts/auto-assign-tasks.mjs",
+    "db:migrate": "supabase db push --db-url $SUPABASE_DB_URL"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
