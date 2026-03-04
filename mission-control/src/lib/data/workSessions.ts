@@ -18,7 +18,7 @@ export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession
   if (!client) return [];
 
   const { data, error } = await client
-    .from<AgentWorkSession>("agent_work_sessions")
+    .from("agent_work_sessions")
     .select(
       "id, task_id, task_slug, task_title, agent_name, status, triggered_at, started_at, completed_at"
     )
@@ -30,10 +30,11 @@ export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession
     if (error) {
       console.error("Failed to load agent work sessions", error);
     }
-    return data ?? [];
+    return (data as AgentWorkSession[] | null) ?? [];
   }
 
-  const ids = data.map((session) => session.id);
+  const sessions = data as AgentWorkSession[];
+  const ids = sessions.map((session) => session.id);
   const actionLog = await client
     .from("action_log")
     .select("entity_id, action, created_at")
@@ -50,7 +51,7 @@ export async function getActiveWorkSessions(limit = 6): Promise<AgentWorkSession
     }
   }
 
-  return data
+  return sessions
     .filter((session) => {
       const action = latestAction.get(session.id);
       if (action && action.action === "complete") {
