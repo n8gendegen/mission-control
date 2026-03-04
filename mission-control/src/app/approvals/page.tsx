@@ -5,7 +5,7 @@ export default function ApprovalsPage() {
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <Sidebar />
-      <main className="ml-64 flex flex-1 flex-col space-y-6 px-8 py-6">
+      <main className="flex flex-1 flex-col space-y-6 px-8 py-6">
         <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
           <div className="flex items-center justify-between gap-6">
             <div>

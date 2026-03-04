@@ -84,7 +84,7 @@ export default async function DataPage({ searchParams = {} }: DataPageProps) {
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <Sidebar />
-      <main className="ml-64 flex flex-1 flex-col space-y-6 px-8 py-6">
+      <main className="flex flex-1 flex-col space-y-6 px-8 py-6">
         <TopBar />
         <section className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

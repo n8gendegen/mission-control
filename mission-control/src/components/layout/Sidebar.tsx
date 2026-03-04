@@ -28,7 +28,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col justify-between border-r border-white/10 bg-[#0b0c10] p-6 text-white/70">
+    <aside className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-white/10 bg-[#0b0c10] p-6 text-white/70">
       <div>
         <div className="text-xs font-semibold tracking-[0.4em] text-white/40">
           MISSION CONTROL
