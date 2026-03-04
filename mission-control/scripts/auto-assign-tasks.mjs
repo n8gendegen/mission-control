@@ -2,8 +2,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { logActivity } from "../shared/log-activity.js";
 
-const DEFAULT_LIMIT = Number(process.env.AUTO_ASSIGN_LIMIT ?? 30);
-const DEFAULT_MAX_ACTIVE = Number(process.env.AUTO_ASSIGN_MAX_ACTIVE ?? 5);
+const DEFAULT_LIMIT = Number(process.env.AUTO_ASSIGN_LIMIT || 30) || 30;
+const DEFAULT_MAX_ACTIVE = Number(process.env.AUTO_ASSIGN_MAX_ACTIVE || 5) || 5;
 
 const AGENT_CONFIG = [
   {
