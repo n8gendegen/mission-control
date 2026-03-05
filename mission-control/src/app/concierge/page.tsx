@@ -135,7 +135,7 @@ export default function ConciergePage() {
               href="#lead-form"
               className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50"
             >
-              Book the concierge
+              Book the concierge (3 slots/week)
             </a>
             <button
               className="rounded-full border border-white/20 px-6 py-3 text-sm text-white/80"
