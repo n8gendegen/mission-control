@@ -12,7 +12,8 @@
     "db:migrate": "supabase db push --db-url $SUPABASE_DB_URL",
     "worker:dispatch-agent": "node scripts/agent-dispatcher.mjs",
     "worker:spy-scan": "node scripts/spy-scan.mjs",
-    "worker:approval-dispatcher": "node scripts/approval-dispatcher.mjs"
+    "worker:approval-dispatcher": "node scripts/approval-dispatcher.mjs",
+    "worker:spy-claims": "node scripts/spy-claims.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
