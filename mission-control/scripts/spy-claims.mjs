@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { Client } from 'pg';
 
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
-const GITHUB_BOUNTY_TOKEN = process.env.GITHUB_BOUNTY_TOKEN || process.env.GITHUB_TOKEN;
+const GITHUB_BOUNTY_TOKEN = process.env.GITHUB_BOUNTY_TOKEN || process.env.BOUNTY_TOKEN || process.env.GITHUB_TOKEN;
 const DRY_RUN = process.env.DRY_RUN === '1';
 
 if (!SUPABASE_DB_URL) {
