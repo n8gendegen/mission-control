@@ -4,7 +4,7 @@ import { logActivity } from "../shared/log-activity.js";
 
 function getTaskSlug(branch) {
   if (!branch) return null;
-  const match = branch.match(/^auto\/([^/]+)/i);
+  const match = branch.match(/^auto\/([^/]+?)(?:-builder.*)?$/i);
   return match ? match[1] : null;
 }
 
@@ -36,10 +36,10 @@ function getTaskSlug(branch) {
     })
     .eq("slug", taskSlug)
     .select("id, slug, title")
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to update task ${taskSlug}: ${error.message}`);
+  if (error || !data) {
+    throw new Error(`Failed to update task ${taskSlug}: ${error?.message ?? "not found"}`);
   }
 
   await logActivity({
