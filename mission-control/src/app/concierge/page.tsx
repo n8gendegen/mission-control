@@ -7,7 +7,8 @@ const benefits = [
   "Secure secrets + battle-tested automations",
   "Mission Control deployed with starter data",
   "Lead funnel + guided install ready day one",
-  "Post-install coaching so the team can run solo"
+  "Post-install coaching so the team can run solo",
+  "Security & compliance handoff checklist for your ops lead"
 ];
 
 const howItWorks = [
