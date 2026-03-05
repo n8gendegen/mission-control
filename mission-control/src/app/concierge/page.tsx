@@ -129,6 +129,7 @@ export default function ConciergePage() {
           <h1 className="mt-4 text-4xl font-semibold text-white">Launch OpenClaw + Mission Control in days, not weeks.</h1>
           <p className="mt-4 max-w-3xl text-base text-white/70">
             We install the entire agent stack, deploy Mission Control, wire your concierge funnel, and leave you with
+            <br/><span className="text-white/60 text-sm">We can onboard up to 3 concierge installs per week—tell us if you're targeting a specific launch date.</span>
             automations that are audited, documented, and ready to scale.
           </p>
           <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center">
