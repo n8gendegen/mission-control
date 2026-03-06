@@ -13,7 +13,11 @@
     "worker:dispatch-agent": "node scripts/agent-dispatcher.mjs",
     "worker:spy-scan": "node scripts/spy-scan.mjs",
     "worker:approval-dispatcher": "node scripts/approval-dispatcher.mjs",
-    "worker:spy-claims": "node scripts/spy-claims.mjs"
+    "worker:spy-claims": "node scripts/spy-claims.mjs",
+    "worker:agent-runner": "node scripts/agent-runner.mjs",
+    "worker:builder-runner": "node scripts/builder-runner.mjs",
+    "spec-generator": "node scripts/spec-generator.mjs",
+    "worker:builder-session": "node scripts/builder-session-runner.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
