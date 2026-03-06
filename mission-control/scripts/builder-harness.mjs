@@ -44,36 +44,41 @@ function parsePayload(raw) {
   }
 }
 
-function pickPreferredTask(rows) {
+function pickPreferredTask(rows, priority) {
   const candidates = rows
     .map((row) => ({ ...row, input_payload: parsePayload(row.input_payload) }))
     .filter((row) => row.input_payload && row.input_payload.splitter_summary && !row.input_payload.builder_last_run_at);
   if (!candidates.length) return null;
-  return candidates.find((row) => row.slug === "task-ai-wire-tap") || candidates[0];
+  for (const slug of priority) {
+    const match = candidates.find((row) => row.slug === slug);
+    if (match) return match;
+  }
+  return candidates[0];
 }
 
-async function fetchSteveTask(store) {
+async function fetchTask(store, ownerInitials, priority) {
   if (store.kind === "supabase") {
     const { data, error } = await store.client
       .from("tasks")
       .select("id, slug, title, input_payload")
-      .eq("owner_initials", "St")
+      .eq("owner_initials", ownerInitials)
       .order("updated_at", { ascending: true })
       .limit(10);
-    if (error) throw new Error(`Failed to load Steve tasks: ${error.message}`);
-    const task = pickPreferredTask(data ?? []);
-    if (!task) throw new Error("No Steve tasks with specs are ready.");
+    if (error) throw new Error(`Failed to load ${ownerInitials} tasks: ${error.message}`);
+    const task = pickPreferredTask(data ?? [], priority);
+    if (!task) throw new Error(`No ${ownerInitials} tasks with specs are ready.`);
     return task;
   }
   const { rows } = await store.pool.query(
     `select id, slug, title, input_payload
      from tasks
-     where owner_initials = 'St'
+     where owner_initials = $1
      order by updated_at asc
-     limit 10`
+     limit 10`,
+    [ownerInitials]
   );
-  const task = pickPreferredTask(rows);
-  if (!task) throw new Error("No Steve tasks with specs are ready.");
+  const task = pickPreferredTask(rows, priority);
+  if (!task) throw new Error(`No ${ownerInitials} tasks with specs are ready.`);
   return task;
 }
 
@@ -107,13 +112,119 @@ function createAiWireTapStub(task) {
   const spec = task.input_payload;
   const dir = "src/lib/ai-wire-tap";
   mkdirSync(dir, { recursive: true });
-  const sources = [
-    "Reuters Tech RSS",
-    "SEC 8-K search API",
-    "Chip advisory RSS",
-  ];
+  const sources = ["Reuters Tech RSS", "SEC 8-K search API", "Chip advisory RSS"];
   const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type AiWireTapEvent = {\n  source: string;\n  title: string;\n  link: string;\n  publishedAt: string;\n  summary: string;\n  affectedLanes: string[];\n  raw: Record<string, unknown>;\n};\n\nexport const AI_WIRE_TAP_SOURCES = ${JSON.stringify(sources, null, 2)};\n\nexport function createAiWireTapEvent(event: AiWireTapEvent) {\n  // TODO: ${spec.splitter_handoff_actions?.[0] ?? "Insert event + alert"}\n  return event;\n}\n`;
   const path = `${dir}/event-model.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createLoadMeterStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/load-meter";
+  mkdirSync(dir, { recursive: true });
+  const firstCriteria = spec.splitter_acceptance_criteria?.[0] ?? "Auto-updates";
+  const lines = [
+    `/**`,
+    ` * ${spec.splitter_summary}`,
+    ` *`,
+    ` * Definition of Done: ${spec.splitter_definition_of_done}`,
+    ` */`,
+    `export type AgentLoadSnapshot = {`,
+    `  agent: string;`,
+    `  points: number;`,
+    `  etaDays: number;`,
+    `  tasks: number;`,
+    `};`,
+    ``,
+    `export const LOAD_BANDS = {`,
+    `  green: { max: 2 },`,
+    `  yellow: { min: 3, max: 4 },`,
+    `  red: { min: 5 }`,
+    `} as const;`,
+    ``,
+    `export function computeLoadBand(points: number) {`,
+    `  if (points <= LOAD_BANDS.green.max) return "green";`,
+    `  if (points >= LOAD_BANDS.red.min) return "red";`,
+    `  return "yellow";`,
+    `}`,
+    ``,
+    `export function describeLoad(snapshot: AgentLoadSnapshot) {`,
+    `  return "${firstCriteria} => " + snapshot.agent + " has " + snapshot.points + " pts";`,
+    `}`,
+  ];
+  const file = lines.join("\n");
+  const path = `${dir}/config.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createTavilyStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/tavily";
+  mkdirSync(dir, { recursive: true });
+  const helper = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type TavilySearchOptions = {\n  focus?: \"news\" | \"finance\" | \"general\";\n  maxResults?: number;\n};\n\nexport async function tavilySearch(query: string, opts: TavilySearchOptions = {}) {\n  throw new Error('Wire Tavily helper per spec: store API key in Supabase and add caching');\n}\n`;
+  const path = `${dir}/helper.ts`;
+  writeFileSync(path, helper);
+  return path;
+}
+
+function createBountyTargetStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/spy";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type BountyTarget = {\n  title: string;\n  repo: string;\n  payoutUsd: number;\n  acceptanceCriteria: string;\n  riskNotes: string;\n};\n\nexport async function selectBountyTarget(): Promise<BountyTarget> {\n  throw new Error('Implement bounty target selection per splitter spec');\n}\n`;
+  const path = `${dir}/bounty-target.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createBountySourcesStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/spy";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type BountySource = {\n  name: string;\n  url: string;\n  filter: string;\n  cadence: string;\n};\n\nexport function listBountySources(): BountySource[] {\n  return []; // TODO: hydrate with scraper output per spec\n}\n`;
+  const path = `${dir}/bounty-sources.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createReplitOauthStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/replit";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type ReplitOAuthConfig = {\n  clientId: string;\n  clientSecret: string;\n  redirectUri: string;\n};\n\nexport function buildReplitAuthUrl(config: ReplitOAuthConfig) {\n  throw new Error('Wire Replit OAuth helper per splitter spec');\n}\n`;
+  const path = `${dir}/oauth.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createRevlabTemplateStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/revlab";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type ExperimentTemplate = {\n  name: string;\n  hypothesis: string;\n  metric: string;\n  owner: string;\n  notes: string;\n};\n\nexport function createExperimentTemplate(): ExperimentTemplate {\n  throw new Error('Define Revenue Lab experiment template per splitter spec');\n}\n`;
+  const path = `${dir}/template.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createRevlabBacklogStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/revlab";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type ExperimentBacklogItem = {\n  id: string;\n  templateId: string;\n  priority: number;\n  etaWeeks: number;\n};\n\nexport function seedExperimentBacklog(): ExperimentBacklogItem[] {\n  return []; // TODO: hydrate from Supabase per spec\n}\n`;
+  const path = `${dir}/backlog.ts`;
+  writeFileSync(path, file);
+  return path;
+}
+
+function createCronCalendarStub(task) {
+  const spec = task.input_payload;
+  const dir = "src/lib/cron";
+  mkdirSync(dir, { recursive: true });
+  const file = `/**\n * ${spec.splitter_summary}\n *\n * Definition of Done: ${spec.splitter_definition_of_done}\n */\nexport type CronJob = {\n  id: string;\n  label: string;\n  cron: string;\n  lane: string;\n};\n\nexport const STATIC_CRON_JOBS: CronJob[] = [];\n\nexport function expandCron(job: CronJob): Date[] {\n  throw new Error('Add cron expansion helper per splitter spec');\n}\n`;
+  const path = `${dir}/calendar.ts`;
   writeFileSync(path, file);
   return path;
 }
@@ -122,6 +233,46 @@ function applySpecChange(task) {
   if (task.slug === "task-ai-wire-tap") {
     return [createAiWireTapStub(task)];
   }
+  if (task.slug === "task-load-meter") {
+    return [createLoadMeterStub(task)];
+  }
+  if (task.slug === "task-tavily-integration") {
+    return [createTavilyStub(task)];
+  }
+  if (task.slug === "task-bounty-target") {
+    return [createBountyTargetStub(task)];
+  }
+  if (task.slug === "task-bounty-sources") {
+    return [createBountySourcesStub(task)];
+  }
+  if (task.slug === "task-replit-oauth") {
+    return [createReplitOauthStub(task)];
+  }
+  if (task.slug === "task-revlab-template") {
+    return [createRevlabTemplateStub(task)];
+  }
+  if (task.slug === "task-revlab-backlog") {
+    return [createRevlabBacklogStub(task)];
+  }
+  if (task.slug === "task-cron-calendar") {
+    return [createCronCalendarStub(task)];
+  }
+  return [];
+}
+
+function defaultPriority(owner) {
+  if (owner === "St") {
+    return ["task-ai-wire-tap", "task-load-meter", "task-tavily-integration", "task-cron-calendar"];
+  }
+  if (owner === "Sp") {
+    return [
+      "task-bounty-target",
+      "task-bounty-sources",
+      "task-replit-oauth",
+      "task-revlab-template",
+      "task-revlab-backlog"
+    ];
+  }
   return [];
 }
 
@@ -129,11 +280,16 @@ async function main() {
   const token = env("BUILDER_GITHUB_TOKEN");
   if (!token) throw new Error("BUILDER_GITHUB_TOKEN is required.");
 
+  const ownerInitials = env("BUILDER_OWNER_INITIALS") ?? "St";
+  const priority = env("BUILDER_PRIORITY_SLUGS")
+    ? env("BUILDER_PRIORITY_SLUGS").split(",").map((item) => item.trim()).filter(Boolean)
+    : defaultPriority(ownerInitials);
+
   const store = createDataStore();
-  const task = await fetchSteveTask(store);
+  const task = await fetchTask(store, ownerInitials, priority);
 
   const branchName = `auto/${task.slug}-builder-v2`;
-  console.log(`Using task ${task.slug} -> branch ${branchName}`);
+  console.log(`Using task ${task.slug} (${ownerInitials}) -> branch ${branchName}`);
 
   run("git checkout main");
   run("git pull origin main");
