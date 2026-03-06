@@ -125,7 +125,7 @@ export function ApprovalsBoard() {
     );
   }, [approvals]);
 
-  const handleStatusChange = async (approvalId: string, status: ApprovalStatus) => {
+  const handleStatusChange = async (approvalId: string, rowId: string, status: ApprovalStatus) => {
     const previous = approvals.map((item) => ({ ...item }));
     setUpdatingId(approvalId + status);
     setApprovals((prev) =>
@@ -139,20 +139,26 @@ export function ApprovalsBoard() {
       )
     );
 
-    const rowId = previous.find((item) => item.id === approvalId)?.rowId;
-    if (!rowId) {
+    const resolvedRowId = rowId || previous.find((item) => item.id === approvalId)?.rowId;
+    if (!resolvedRowId) {
       console.error("Missing approval rowId");
       setUpdatingId(null);
       setApprovals(previous);
       return;
     }
 
-    const { error } = await supabase
-      .from("approvals")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", rowId);
+    try {
+      const response = await fetch("/api/approvals/update-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rowId: resolvedRowId, status }),
+      });
 
-    if (error) {
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || "Failed to update approval status");
+      }
+    } catch (error) {
       console.error("Failed to update approval status", error);
       setApprovals(previous);
     }
@@ -267,14 +273,14 @@ export function ApprovalsBoard() {
             <div className="mt-4 flex gap-3">
               <button
                 disabled={approval.status === "approved" || updatingId === approval.id + "approved"}
-                onClick={() => handleStatusChange(approval.id, "approved")}
+                onClick={() => handleStatusChange(approval.id, approval.rowId ?? approval.id, "approved")}
                 className="rounded-full bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-100 disabled:opacity-30"
               >
                 Approve
               </button>
               <button
                 disabled={approval.status === "rejected" || updatingId === approval.id + "rejected"}
-                onClick={() => handleStatusChange(approval.id, "rejected")}
+                onClick={() => handleStatusChange(approval.id, approval.rowId ?? approval.id, "rejected")}
                 className="rounded-full bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-100 disabled:opacity-30"
               >
                 Reject

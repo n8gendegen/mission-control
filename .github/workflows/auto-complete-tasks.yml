@@ -1,0 +1,31 @@
+name: Auto-complete builder tasks
+
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  complete-task:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'auto/task-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: npm ci --ignore-scripts
+        working-directory: mission-control
+      - name: Mark task complete
+        run: node scripts/auto-complete-task.mjs
+        working-directory: mission-control
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BUILDER_BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_PR_HTML_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+          GITHUB_SHA: ${{ github.event.pull_request.merge_commit_sha }}

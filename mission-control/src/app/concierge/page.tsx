@@ -7,7 +7,8 @@ const benefits = [
   "Secure secrets + battle-tested automations",
   "Mission Control deployed with starter data",
   "Lead funnel + guided install ready day one",
-  "Post-install coaching so the team can run solo"
+  "Post-install coaching so the team can run solo",
+  "Security & compliance handoff checklist for your ops lead"
 ];
 
 const howItWorks = [
@@ -128,6 +129,7 @@ export default function ConciergePage() {
           <h1 className="mt-4 text-4xl font-semibold text-white">Launch OpenClaw + Mission Control in days, not weeks.</h1>
           <p className="mt-4 max-w-3xl text-base text-white/70">
             We install the entire agent stack, deploy Mission Control, wire your concierge funnel, and leave you with
+            <br/><span className="text-white/60 text-sm">We can onboard up to 3 concierge installs per week—tell us if you&rsquo;re targeting a specific launch date.</span>
             automations that are audited, documented, and ready to scale.
           </p>
           <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center">
@@ -135,7 +137,7 @@ export default function ConciergePage() {
               href="#lead-form"
               className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50"
             >
-              Book the concierge
+              Book the concierge (3 slots/week)
             </a>
             <button
               className="rounded-full border border-white/20 px-6 py-3 text-sm text-white/80"
@@ -284,6 +286,7 @@ export default function ConciergePage() {
               </div>
               <div>
                 <label className="text-sm text-white/60">Context / blockers</label>
+    <p className="text-xs text-white/40">Where are you stuck? Mention OS, security constraints, or tools we should prep.</p>
                 <textarea
                   className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
                   rows={4}
