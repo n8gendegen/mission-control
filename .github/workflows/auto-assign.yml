@@ -2,7 +2,7 @@ name: Auto-assign Mission Control backlog
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # every 30 minutes, gate in-job based on local time
+    - cron: "0 * * * *" # top of every hour
   workflow_dispatch:
 
 jobs:
@@ -15,6 +15,9 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       AUTO_ASSIGN_LIMIT: ${{ vars.AUTO_ASSIGN_LIMIT }}
       AUTO_ASSIGN_MAX_ACTIVE: ${{ vars.AUTO_ASSIGN_MAX_ACTIVE }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      BUILDER_GITHUB_TOKEN: ${{ secrets.GITHUB_BOUNTY_TOKEN }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,32 +27,24 @@ jobs:
         run: |
           tz="America/New_York"
           hour=$(TZ=$tz date +%H)
-          minute=$(TZ=$tz date +%M)
 
           should_run="true"
-          mode="manual"
+          mode="sleep"
 
-          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
-              mode="awake"
-            else
-              mode="sleep"
-            fi
+          if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
+            mode="awake"
           fi
 
           echo "should_run=${should_run}" >> "$GITHUB_OUTPUT"
           echo "mode=${mode}" >> "$GITHUB_OUTPUT"
           echo "Local time: $(TZ=$tz date) | should_run=${should_run} | mode=${mode}"
 
-      - name: Skip run (outside schedule)
-        if: steps.window.outputs.should_run != 'true'
-        run: echo "Sleeping this half-hour window"
-
       - name: Setup Node.js
         if: steps.window.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
         if: steps.window.outputs.should_run == 'true'
@@ -61,9 +56,29 @@ jobs:
         run: npm run worker:auto-assign
         working-directory: mission-control
 
-      - name: Trigger agent dispatcher
+      - name: Run agent dispatcher
         if: steps.window.outputs.should_run == 'true'
         run: npm run worker:dispatch-agent
+        working-directory: mission-control
+
+      - name: Run Splitter agent runner
+        if: steps.window.outputs.should_run == 'true' && env.OPENAI_API_KEY != ''
+        run: npm run worker:agent-runner -- --agent Splitter --limit 3
+        working-directory: mission-control
+
+      - name: Configure git identity for builder harness
+        if: steps.window.outputs.should_run == 'true'
+        run: |
+          git config user.name "Mission Control Builder"
+          git config user.email "builder@users.noreply.github.com"
+        working-directory: mission-control
+
+      - name: Run builder harness session
+        if: steps.window.outputs.should_run == 'true'
+        env:
+          BUILDER_GITHUB_TOKEN: ${{ secrets.GITHUB_BOUNTY_TOKEN }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: npm run worker:builder-session -- --limit 1
         working-directory: mission-control
 
       - name: Annotate completion
