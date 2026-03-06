@@ -1,5 +1,6 @@
 import { AgentHealthTile } from "../health/AgentHealthTile";
 import { AgentWorkSessionsPanel } from "../health/AgentWorkSessionsPanel";
+import { AgentCapacityMeter } from "../health/AgentCapacityMeter";
 import { getAgentHealth } from "../../lib/data/agentHealth";
 import { getActiveWorkSessions } from "../../lib/data/workSessions";
 import { getSupabaseClient } from "../../lib/supabase/client";
@@ -93,7 +94,10 @@ export async function TopBar() {
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <AgentHealthTile records={agentHealth} />
-        <AgentWorkSessionsPanel sessions={workSessions} />
+        <div className="space-y-6">
+          <AgentWorkSessionsPanel sessions={workSessions} />
+          <AgentCapacityMeter records={agentHealth} />
+        </div>
       </div>
       <div className="mt-6 flex items-center justify-between">
         <button className="rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow shadow-violet-500/40">
