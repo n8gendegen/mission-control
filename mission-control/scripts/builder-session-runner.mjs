@@ -120,10 +120,52 @@ async function markTaskComplete(taskId) {
   );
 }
 
+async function recordHealth(agentId, agentName, lane, payload = {}) {
+  const now = new Date().toISOString();
+  await pool.query(
+    `insert into agent_health_status (agent_id, agent_name, lane, status, last_run_at, last_duration_ms, next_run_eta, error_context, metadata, updated_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)
+     on conflict (agent_id) do update
+       set agent_name = excluded.agent_name,
+           lane = excluded.lane,
+           status = excluded.status,
+           last_run_at = excluded.last_run_at,
+           last_duration_ms = excluded.last_duration_ms,
+           next_run_eta = excluded.next_run_eta,
+           error_context = excluded.error_context,
+           metadata = excluded.metadata,
+           updated_at = excluded.updated_at`,
+    [
+      agentId,
+      agentName,
+      lane,
+      payload.status ?? 'unknown',
+      now,
+      payload.lastDurationMs ?? null,
+      payload.nextRunEta ?? null,
+      payload.errorContext ?? null,
+      JSON.stringify(payload.metadata ?? {}),
+      now,
+    ]
+  );
+}
+
 async function main() {
   const sessions = await fetchPendingSessions(SESSION_LIMIT);
+  const startTime = Date.now();
+  const agentId = `runner:builder:${TARGET_AGENT.toLowerCase()}`;
+  const agentName = `${TARGET_AGENT} Builder`;
+  let completedCount = 0;
+  let errorCount = 0;
+
   if (!sessions.length) {
     console.log("No pending builder sessions for", TARGET_AGENT);
+    await recordHealth(agentId, agentName, TARGET_AGENT, {
+      status: "dry_run",
+      lastDurationMs: Date.now() - startTime,
+      nextRunEta: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      metadata: { assigned: 0, skipped: 0, approvals_blocked: 0, dry_run: true },
+    });
     await pool.end();
     return;
   }
@@ -143,8 +185,10 @@ async function main() {
         runner_status: "completed",
         runner_notes: { branch, pr_url: prUrl, commit },
       });
+      completedCount += 1;
       console.log(`Builder session ${session.id} completed (${session.task_slug}).`);
     } catch (err) {
+      errorCount += 1;
       console.error(`Builder session ${session.id} failed:`, err.message ?? err);
       await markSessionStatus(session.id, {
         runner_status: "error",
@@ -152,6 +196,15 @@ async function main() {
       });
     }
   }
+
+  const status = errorCount === 0 ? "ok" : completedCount > 0 ? "warning" : "error";
+  await recordHealth(agentId, agentName, TARGET_AGENT, {
+    status,
+    lastDurationMs: Date.now() - startTime,
+    nextRunEta: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    errorContext: errorCount ? `${errorCount} failure(s)` : null,
+    metadata: { assigned: completedCount, skipped: errorCount, approvals_blocked: 0, dry_run: false },
+  });
   await pool.end();
 }
 
