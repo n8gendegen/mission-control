@@ -281,9 +281,7 @@ async function main() {
   if (!token) throw new Error("BUILDER_GITHUB_TOKEN is required.");
 
   const repoSlug = env("GITHUB_REPOSITORY");
-  if (env("CI") === "true" && repoSlug) {
-    run(`git remote set-url origin https://${token}@github.com/${repoSlug}.git`);
-  }
+  const remoteUrl = repoSlug ? `https://${token}@github.com/${repoSlug}.git` : null;
 
   const ownerInitials = env("BUILDER_OWNER_INITIALS") ?? "St";
   const priority = env("BUILDER_PRIORITY_SLUGS")
@@ -297,7 +295,7 @@ async function main() {
   console.log(`Using task ${task.slug} (${ownerInitials}) -> branch ${branchName}`);
 
   run("git checkout main");
-  run("git pull origin main");
+  run(remoteUrl ? `git pull ${remoteUrl} main` : "git pull origin main");
   run(`git checkout -B ${branchName}`);
 
   mkdirSync("docs/builder", { recursive: true });
@@ -313,7 +311,11 @@ async function main() {
   run(`git add ${[docPath, "docs/builder-log.md", ...specFiles].join(" ")}`);
   run(`git commit -m "builder: plan + stub for ${task.slug}"`);
 
-  run(`git push origin ${branchName} --force`);
+  if (remoteUrl) {
+    run(`git push ${remoteUrl} ${branchName} --force`);
+  } else {
+    run(`git push origin ${branchName} --force`);
+  }
 
   const prTitle = `Builder: ${task.title}`;
   const prBody = `Automation scaffold derived from splitter spec for ${task.slug}.`;
