@@ -280,6 +280,11 @@ async function main() {
   const token = env("BUILDER_GITHUB_TOKEN");
   if (!token) throw new Error("BUILDER_GITHUB_TOKEN is required.");
 
+  const repoSlug = env("GITHUB_REPOSITORY");
+  if (env("CI") === "true" && repoSlug) {
+    run(`git remote set-url origin https://${token}@github.com/${repoSlug}.git`);
+  }
+
   const ownerInitials = env("BUILDER_OWNER_INITIALS") ?? "St";
   const priority = env("BUILDER_PRIORITY_SLUGS")
     ? env("BUILDER_PRIORITY_SLUGS").split(",").map((item) => item.trim()).filter(Boolean)
