@@ -283,6 +283,14 @@ async function main() {
   const repoSlug = env("GITHUB_REPOSITORY");
   const remoteUrl = repoSlug ? `https://${token}@github.com/${repoSlug}.git` : null;
 
+  if (env("CI") === "true") {
+    try {
+      run("git config --unset-all http.https://github.com/.extraheader");
+    } catch (err) {
+      // ignore if the header wasn't set
+    }
+  }
+
   const ownerInitials = env("BUILDER_OWNER_INITIALS") ?? "St";
   const priority = env("BUILDER_PRIORITY_SLUGS")
     ? env("BUILDER_PRIORITY_SLUGS").split(",").map((item) => item.trim()).filter(Boolean)
