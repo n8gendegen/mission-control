@@ -1,5 +1,4 @@
 import { Sidebar } from "../../components/layout/Sidebar";
-import { TopBar } from "../../components/layout/TopBar";
 import { SummaryCard } from "../../components/data/SummaryCard";
 import { RangeFilter } from "../../components/data/RangeFilter";
 import { DailySpendChart } from "../../components/data/DailySpendChart";
@@ -85,7 +84,6 @@ export default async function DataPage({ searchParams = {} }: DataPageProps) {
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <Sidebar />
       <main className="flex flex-1 flex-col space-y-6 px-8 py-6">
-        <TopBar />
         <section className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
