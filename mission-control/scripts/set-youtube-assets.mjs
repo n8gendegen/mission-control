@@ -27,6 +27,24 @@ const assetCatalog = {
       },
     ],
   },
+  "ai-directors-union": {
+    slugs: [
+      "task-yt-assets-ai-directors",
+      "task-yt-packaging-ai-directors",
+      "task-yt-publish-ai-directors",
+    ],
+    links: [
+      {
+        label: "Draft MP4",
+        url: "https://dzmtdzfkhtnryhpkwfcd.supabase.co/storage/v1/object/public/youtube-drafts/yt-sora.mp4",
+      },
+      {
+        label: "Thumbnail",
+        url: "https://dzmtdzfkhtnryhpkwfcd.supabase.co/storage/v1/object/public/youtube-drafts/yt-sora-thumb.jpg",
+      },
+    ],
+  },
+
 };
 
 const videoSlug = process.argv[2] || "sora-breaks-hollywood";

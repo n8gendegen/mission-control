@@ -82,7 +82,11 @@ async function downloadFile(url, tmpDir, filename) {
 
 function slugBase(videoSlug) {
   if (!videoSlug) return null;
-  return videoSlug.split("-")[0];
+  const parts = videoSlug.split("-");
+  if (parts.length >= 2) {
+    return `${parts[0]}-${parts[1]}`;
+  }
+  return parts[0];
 }
 
 async function loadPackagingBrief(videoSlug) {
