@@ -8,6 +8,44 @@ function getTaskSlug(branch) {
   return match ? match[1] : null;
 }
 
+async function completeTask(client, taskSlug) {
+  const now = new Date().toISOString();
+  const { data, error } = await client
+    .from("tasks")
+    .update({
+      column_id: "done",
+      status: "done",
+      completed_at: now,
+      updated_at: now,
+    })
+    .eq("slug", taskSlug)
+    .select("id, slug, title")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(`Failed to update task ${taskSlug}: ${error?.message ?? "not found"}`);
+  }
+  return data;
+}
+
+async function completeSessions(client, taskSlug) {
+  const now = new Date().toISOString();
+  const { error } = await client
+    .from("agent_work_sessions")
+    .update({
+      status: "completed",
+      runner_status: "completed",
+      completed_at: now,
+      updated_at: now,
+    })
+    .eq("task_slug", taskSlug)
+    .not("status", "eq", "completed");
+
+  if (error) {
+    console.warn(`Warning: unable to close sessions for ${taskSlug}: ${error.message}`);
+  }
+}
+
 (async function main() {
   const branchName = process.env.BUILDER_BRANCH_NAME || process.argv[2];
   const taskSlug = getTaskSlug(branchName);
@@ -25,30 +63,16 @@ function getTaskSlug(branch) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const now = new Date().toISOString();
-  const { data, error } = await client
-    .from("tasks")
-    .update({
-      column_id: "done",
-      status: "done",
-      completed_at: now,
-      updated_at: now,
-    })
-    .eq("slug", taskSlug)
-    .select("id, slug, title")
-    .maybeSingle();
-
-  if (error || !data) {
-    throw new Error(`Failed to update task ${taskSlug}: ${error?.message ?? "not found"}`);
-  }
+  const task = await completeTask(client, taskSlug);
+  await completeSessions(client, taskSlug);
 
   await logActivity({
     eventType: "task_completed",
-    summary: `${data.title ?? taskSlug} auto-completed via builder merge`,
+    summary: `${task.title ?? taskSlug} auto-completed via builder merge`,
     actor: process.env.GITHUB_MERGED_BY || "BuilderHarness",
     source: "builder-monitor",
     entityType: "task",
-    entityId: data.id,
+    entityId: task.id,
     metadata: {
       branch: branchName,
       task_slug: taskSlug,
@@ -58,5 +82,5 @@ function getTaskSlug(branch) {
     },
   });
 
-  console.log(`Task ${taskSlug} marked done at ${now}`);
+  console.log(`Task ${taskSlug} marked done at ${new Date().toISOString()}`);
 })();
