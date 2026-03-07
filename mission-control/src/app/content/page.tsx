@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { YoutubeTaskRow } from "../../lib/data/youtubeTasks";
 import { fetchYoutubeTasks } from "../../lib/data/youtubeTasks";
 
@@ -18,6 +19,7 @@ type DisplayTask = {
   videoSlug?: string | null;
   targetPublishAt?: string | null;
   youtubeVideoId?: string | null;
+  youtubeUrl?: string | null;
   assetLinks?: { label: string; url: string }[];
   metrics?: { ctr?: number; retention?: number; views?: number } | null;
 };
@@ -63,6 +65,7 @@ function mapRows(rows: YoutubeTaskRow[]): DisplayTask[] {
     videoSlug: row.video_slug,
     targetPublishAt: row.target_publish_at,
     youtubeVideoId: row.youtube_video_id ?? undefined,
+    youtubeUrl: row.youtube_url ?? undefined,
     assetLinks: row.asset_links ?? undefined,
     metrics: row.metrics ?? undefined,
   }));
@@ -143,7 +146,10 @@ export default async function ContentPage() {
                 </div>
                 <div className="space-y-3">
                   {grouped[lane.id].length ? (
-                    grouped[lane.id].map((task) => (
+                    grouped[lane.id].map((task) => {
+                      const videoLink = task.assetLinks?.find((link) => /mp4|video|draft/i.test(link.label) || link.url.endsWith('.mp4'));
+                      const thumbLink = task.assetLinks?.find((link) => /thumb|preview/i.test(link.label) || link.url.toLowerCase().includes('thumb'));
+                      return (
                       <article key={task.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/70">
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -163,13 +169,28 @@ export default async function ContentPage() {
                           )}
                           {task.youtubeVideoId && <span className="text-white/50">{task.youtubeVideoId}</span>}
                         </div>
-                        {task.assetLinks && task.assetLinks.length > 0 && (
-                          <div className="flex flex-wrap gap-2 text-xs text-cyan-200">
-                            {task.assetLinks.map((asset) => (
-                              <a key={asset.url} href={asset.url} className="rounded-full border border-white/10 px-3 py-1 hover:border-cyan-300" target="_blank" rel="noreferrer">
-                                {asset.label}
+                        {thumbLink && (
+                          <a href={thumbLink.url} target="_blank" rel="noreferrer">
+                            <img src={thumbLink.url} alt={`${task.title} thumbnail`} className="w-full rounded-xl border border-white/10" />
+                          </a>
+                        )}
+                        {(videoLink || thumbLink || task.youtubeUrl) && (
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            {videoLink && (
+                              <a href={videoLink.url} target="_blank" rel="noreferrer" className="rounded-full border border-white/20 px-3 py-1 text-white/80 hover:border-cyan-300">
+                                Preview
                               </a>
-                            ))}
+                            )}
+                            {thumbLink && (
+                              <a href={thumbLink.url} target="_blank" rel="noreferrer" className="rounded-full border border-white/20 px-3 py-1 text-white/60 hover:border-cyan-300">
+                                Thumbnail
+                              </a>
+                            )}
+                            {task.youtubeUrl && (
+                              <a href={task.youtubeUrl} target="_blank" rel="noreferrer" className="rounded-full border border-emerald-300/40 px-3 py-1 text-emerald-200 hover:border-emerald-300">
+                                YouTube
+                              </a>
+                            )}
                           </div>
                         )}
                         {task.metrics && (
@@ -180,7 +201,8 @@ export default async function ContentPage() {
                           </div>
                         )}
                       </article>
-                    ))
+                    );
+                    })
                   ) : (
                     <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-6 text-center text-xs text-white/30">
                       Empty lane
