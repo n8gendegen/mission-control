@@ -12,3 +12,8 @@
 - **Assets needed:** 2 B-roll clips (studio + Sora render), caption safe zone template, CTA end card.
 
 _This brief is generated as part of the YouTube content engine pipeline so Steve’s lane has a durable artifact per script task._
+
+## CTA Overlay
+- Frame: "Want the full teardown?" with neon arrow pointing to Mission Control logo.
+- Timing: 24s mark with 1.5s hold.
+- Add missioncontrol.ai/shorts vanity URL in microtext.
