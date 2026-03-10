@@ -1,9 +1,10 @@
 import { AgentHealthTile } from "../health/AgentHealthTile";
-import { AgentWorkSessionsPanel } from "../health/AgentWorkSessionsPanel";
-import { AgentCapacityMeter } from "../health/AgentCapacityMeter";
+import { AgentRosterPanel } from "../health/AgentRosterPanel";
+import { WorkflowStageSummary } from "../board/WorkflowStageSummary";
 import { getAgentHealth } from "../../lib/data/agentHealth";
 import { getActiveWorkSessions } from "../../lib/data/workSessions";
 import { getSupabaseClient } from "../../lib/supabase/client";
+import { determineStageFromTask, TASK_STAGE_DEFINITIONS, type StageSnapshot } from "../../lib/data/taskStages";
 
 type TaskMetrics = {
   total: number;
@@ -12,6 +13,45 @@ type TaskMetrics = {
   completedThisWeek: number;
   completionPct: number;
 };
+
+
+async function getStageSnapshot(): Promise<StageSnapshot> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return {
+      total: 0,
+      stages: TASK_STAGE_DEFINITIONS.map((stage) => ({ ...stage, count: 0 })),
+    };
+  }
+
+  const { data, error } = await client
+    .from("tasks")
+    .select("id, owner_initials, column_id, input_payload, lane");
+
+  if (error || !data) {
+    console.error("Failed to load stage snapshot", error);
+    return {
+      total: 0,
+      stages: TASK_STAGE_DEFINITIONS.map((stage) => ({ ...stage, count: 0 })),
+    };
+  }
+
+  const counts: Record<string, number> = {};
+  data.forEach((task) => {
+    const stage = determineStageFromTask({
+      ownerInitials: (task as any).owner_initials,
+      columnId: (task as any).column_id,
+      inputPayload: (task as any).input_payload,
+      lane: (task as any).lane,
+    });
+    counts[stage.key] = (counts[stage.key] ?? 0) + 1;
+  });
+
+  return {
+    total: data.length,
+    stages: TASK_STAGE_DEFINITIONS.map((stage) => ({ ...stage, count: counts[stage.key] ?? 0 })),
+  };
+}
 
 async function getTaskMetrics(): Promise<TaskMetrics> {
   const client = getSupabaseClient();
@@ -62,10 +102,11 @@ function MetricCard({ label, value, accent }: { label: string; value: string | n
 }
 
 export async function TopBar() {
-  const [agentHealth, workSessions, taskMetrics] = await Promise.all([
+  const [agentHealth, workSessions, taskMetrics, stageSnapshot] = await Promise.all([
     getAgentHealth(),
     getActiveWorkSessions(),
     getTaskMetrics(),
+    getStageSnapshot(),
   ]);
   return (
     <header className="rounded-3xl border border-white/5 bg-[#0b0d12] p-6 text-white">
@@ -93,11 +134,11 @@ export async function TopBar() {
         <MetricCard label="Completion" value={`${taskMetrics.completionPct}%`} accent="text-violet-300" />
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <WorkflowStageSummary stages={stageSnapshot.stages} total={stageSnapshot.total} />
+        <AgentRosterPanel sessions={workSessions} />
+      </div>
+      <div className="mt-6">
         <AgentHealthTile records={agentHealth} />
-        <div className="space-y-6">
-          <AgentWorkSessionsPanel sessions={workSessions} />
-          <AgentCapacityMeter records={agentHealth} />
-        </div>
       </div>
       <div className="mt-6 flex items-center justify-between">
         <button className="rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow shadow-violet-500/40">

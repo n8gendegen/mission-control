@@ -10,6 +10,10 @@ export type TaskRecord = {
   ownerInitials: string;
   source: string;
   timeAgo: string;
+  stageKey: string;
+  stageLabel: string;
+  stageShortLabel: string;
+  stageBadgeClass: string;
 };
 
 export type ActivityRecord = {

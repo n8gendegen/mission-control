@@ -15,6 +15,7 @@ export type YoutubeTaskRow = {
   video_slug: string | null;
   target_publish_at: string | null;
   youtube_video_id: string | null;
+  youtube_url: string | null;
   asset_links: { label: string; url: string }[] | null;
   metrics: { ctr?: number; retention?: number; views?: number } | null;
 };
@@ -36,5 +37,5 @@ export async function fetchYoutubeTasks(projectId: string): Promise<YoutubeTaskR
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []) as YoutubeTaskRow[];
 }
