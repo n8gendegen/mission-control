@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TaskColumn, TaskRecord } from "../../lib/data/types";
 import { supabase } from "../../lib/supabase/client";
+import fallbackTasksRaw from "../../../data/tasks.json";
 import { Column } from "./Column";
+import { determineStageFromTask } from "../../lib/data/taskStages";
 
 type ColumnConfig = {
   id: TaskColumn;
@@ -13,7 +15,7 @@ type ColumnConfig = {
 type TaskRow = {
   id: string;
   slug: string | null;
-  column_id: TaskColumn;
+  column_id: TaskColumn | string | null;
   title: string;
   description: string | null;
   status_color: string | null;
@@ -21,7 +23,31 @@ type TaskRow = {
   source: string | null;
   updated_at: string | null;
   created_at: string | null;
+  input_payload: unknown | null;
+  lane: string | null;
 };
+
+function normalizeColumn(value?: string | null): TaskColumn {
+  if (value === 'in_progress') return 'in-progress';
+  if (value === 'done') return 'rev';
+  if (value === 'in-progress' || value === 'backlog' || value === 'rev') {
+    return value as TaskColumn;
+  }
+  return 'backlog';
+}
+
+const fallbackTaskRecords: TaskRecord[] = (fallbackTasksRaw as Array<Record<string, any>>).map((task) => {
+  const stage = determineStageFromTask({ ownerInitials: task.ownerInitials, columnId: task.column });
+  return {
+    ...task,
+    rowId: task.rowId ?? task.id,
+    column: normalizeColumn(task.column as TaskColumn),
+    stageKey: stage.key,
+    stageLabel: stage.label,
+    stageShortLabel: stage.shortLabel,
+    stageBadgeClass: stage.badgeClass,
+  } as TaskRecord;
+});
 
 const columns: ColumnConfig[] = [
   { id: "backlog", title: "Backlog" },
@@ -44,16 +70,26 @@ function formatRelativeTime(timestamp?: string | null) {
 }
 
 function mapRowToTask(row: TaskRow): TaskRecord {
+  const stage = determineStageFromTask({
+    ownerInitials: row.owner_initials,
+    columnId: normalizeColumn(row.column_id),
+    inputPayload: row.input_payload,
+    lane: row.lane,
+  });
   return {
     id: row.slug ?? row.id,
     rowId: row.id,
-    column: row.column_id ?? "backlog",
+    column: normalizeColumn(row.column_id),
     title: row.title,
     description: row.description ?? "",
     statusColor: row.status_color ?? "bg-slate-500",
     ownerInitials: row.owner_initials ?? "--",
     source: row.source ?? "Mission Control",
     timeAgo: formatRelativeTime(row.updated_at ?? row.created_at),
+    stageKey: stage.key,
+    stageLabel: stage.label,
+    stageShortLabel: stage.shortLabel,
+    stageBadgeClass: stage.badgeClass,
   };
 }
 
@@ -65,12 +101,21 @@ export function BoardShell() {
   useEffect(() => {
     let isMounted = true;
 
+    if (!supabase) {
+      setTasks(fallbackTaskRecords);
+      setIsLoading(false);
+      setError("Supabase is not configured");
+      return () => {
+        isMounted = false;
+      };
+    }
+
     async function fetchTasks() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from("tasks")
         .select(
-          "id,slug,title,description,column_id,status_color,owner_initials,source,updated_at,created_at"
+          "id,slug,title,description,column_id,status_color,owner_initials,source,updated_at,created_at,input_payload,lane"
         )
         .order("created_at", { ascending: true });
 
@@ -79,10 +124,11 @@ export function BoardShell() {
       if (error) {
         console.error("Failed to load tasks from Supabase", error);
         setError("Unable to load tasks");
-        setTasks([]);
+        setTasks(fallbackTaskRecords);
       } else {
         setError(null);
-        setTasks((data ?? []).map(mapRowToTask));
+        const mapped = (data ?? []).map(mapRowToTask);
+        setTasks(mapped.length ? mapped : fallbackTaskRecords);
       }
       setIsLoading(false);
     }
