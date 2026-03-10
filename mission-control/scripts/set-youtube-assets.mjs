@@ -45,6 +45,23 @@ const assetCatalog = {
     ],
   },
 
+  "goalie-top-3-walls": {
+    slugs: [
+      "task-yt-assets-goalie-top-3-walls",
+      "task-yt-packaging-goalie-top-3-walls",
+      "task-yt-publish-goalie-top-3-walls",
+    ],
+    links: [
+      {
+        label: "Draft MP4",
+        url: "https://dzmtdzfkhtnryhpkwfcd.supabase.co/storage/v1/object/public/youtube-drafts/dryruns/goalie-top-3-walls.mp4",
+      },
+      {
+        label: "Thumbnail",
+        url: "https://dzmtdzfkhtnryhpkwfcd.supabase.co/storage/v1/object/public/youtube-drafts/dryruns/goalie-top-3-walls-thumb.png",
+      },
+    ],
+  },
 };
 
 const videoSlug = process.argv[2] || "sora-breaks-hollywood";
