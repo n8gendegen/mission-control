@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Usage: npm run spec-generator -- --lane=steve --limit=1
-// Requires OPENAI_API_KEY plus either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_DB_URL in the env.
+// Requires DEEPSEEK_API_KEY (preferred) or OPENAI_API_KEY plus Supabase creds.
 import { createClient } from "@supabase/supabase-js";
 import { Pool } from "pg";
+import { fetchJsonWithCache } from "./lib/llm.js";
 
 const lanes = {
   steve: { initials: "St" },
@@ -25,14 +26,6 @@ function parseArgs() {
   return options;
 }
 
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing ${name} environment variable`);
-  }
-  return value;
-}
-
 function parsePayload(raw) {
   if (!raw) return null;
   if (typeof raw === "object") return raw;
@@ -41,6 +34,18 @@ function parsePayload(raw) {
   } catch (err) {
     return null;
   }
+}
+
+function buildLeanContext(task) {
+  const payload = task.input_payload && typeof task.input_payload === "object" ? task.input_payload : null;
+  const acceptanceCriteria = Array.isArray(payload?.splitter_acceptance_criteria)
+    ? payload.splitter_acceptance_criteria.slice(0, 6)
+    : [];
+  return {
+    slug: task.slug ?? task.id,
+    title: task.title ?? "",
+    acceptanceCriteria,
+  };
 }
 
 function createDataStore() {
@@ -96,38 +101,19 @@ async function fetchTasks(store, initials, limit) {
   return filtered.slice(0, limit);
 }
 
-async function generateSpec({ title, description }) {
-  const apiKey = requireEnv("OPENAI_API_KEY");
-  const instructions = `You are Splitter drafting specs for automation tasks. Return JSON with keys: summary, definition_of_done, acceptance_criteria (array), handoff_actions (array), spec_markdown.`;
-  const userContent = JSON.stringify({ title, description }, null, 2);
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4.1-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: instructions },
-        { role: "user", content: userContent },
-      ],
-    }),
-  });
-
-  const payload = await response.json();
-  if (!response.ok) {
-    const message = payload?.error?.message || "OpenAI request failed";
-    throw new Error(message);
-  }
-  const content = payload?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenAI response missing content");
-  }
-  return JSON.parse(content);
+async function generateSpec(task) {
+  const context = buildLeanContext(task);
+  const instructions = `You are Splitter drafting specs for automation tasks.
+Given only the task slug, title, and any acceptance criteria, produce JSON with:
+- summary (2 sentences)
+- definition_of_done
+- acceptance_criteria (array)
+- handoff_actions (array)
+- spec_markdown (markdown doc)
+Do NOT request more context; work with what you have.`;
+  const userContent = JSON.stringify(context, null, 2);
+  const cached = await fetchJsonWithCache({ instructions, userContent });
+  return JSON.parse(cached);
 }
 
 async function writeSpec(store, task, spec) {

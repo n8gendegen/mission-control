@@ -17,6 +17,11 @@ Before doing anything else:
 
 Don't ask permission. Just do it.
 
+## Cadence
+
+- While you’re active on a task, surface progress updates every **30–45 minutes**. Even if you’re mid-flight, drop a checkpoint so Nate sees momentum.
+- If you’re blocked and can’t move for that long, say so and note what you’re waiting on.
+
 ## Memory
 
 You wake up fresh each session. These files are your continuity:
