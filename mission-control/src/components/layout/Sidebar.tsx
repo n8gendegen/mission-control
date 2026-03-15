@@ -16,7 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Approvals", href: "/approvals" },
   { label: "Council" },
   { label: "Calendar" },
-  { label: "Projects" },
+  { label: "Projects", href: "/projects" },
   { label: "Memory" },
   { label: "Docs" },
   { label: "People" },

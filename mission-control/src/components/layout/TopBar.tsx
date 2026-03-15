@@ -79,7 +79,7 @@ export async function TopBar() {
             Pause
           </button>
           <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80">
-            Ping Henry
+            Ping Jean
           </button>
           <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50">
             Search…
@@ -105,7 +105,7 @@ export async function TopBar() {
         </button>
         <div className="flex items-center gap-3 text-sm text-white/60">
           <div className="flex gap-2">
-            {['Alex', 'Henry'].map((person) => (
+            {['Jean'].map((person) => (
               <span
                 key={person}
                 className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs"

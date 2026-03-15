@@ -2,10 +2,51 @@
 import { createClient } from "@supabase/supabase-js";
 import { Pool } from "pg";
 import { logActivity } from "../shared/log-activity.js";
+import { fetchJsonWithCache } from "./lib/llm.js";
 
 const DEFAULT_AGENT = process.env.AGENT_RUNNER_AGENT || "Splitter";
 const DEFAULT_LIMIT = Number(process.env.AGENT_RUNNER_LIMIT || 2) || 2;
-const DEFAULT_MODEL = process.env.AGENT_RUNNER_MODEL || "gpt-4.1-mini";
+const DEFAULT_MODEL =
+  process.env.AGENT_RUNNER_MODEL ||
+  (process.env.DEEPSEEK_API_KEY ? process.env.DEEPSEEK_MODEL || "deepseek-chat" : "gpt-4.1-mini");
+
+const AGENT_PROFILES = {
+  Splitter: {
+    promptBuilder: buildSplitterPrompt,
+    defaultModel: process.env.SPLITTER_MODEL || DEFAULT_MODEL,
+    runnerActor: "SplitterRunner",
+    summaryPrefix: "Splitter produced spec",
+  },
+  Sweeper: {
+    promptBuilder: buildSweeperPrompt,
+    defaultModel: process.env.SWEEPER_MODEL || process.env.DEEPSEEK_MODEL || DEFAULT_MODEL,
+    runnerActor: "SweeperRunner",
+    summaryPrefix: "Sweeper polished spec",
+  },
+};
+
+const TITLE_LIMIT = Number(process.env.AGENT_CONTEXT_FIELD_LIMIT || 200);
+const ACCEPTANCE_LIMIT = Number(process.env.AGENT_CONTEXT_ARRAY_LIMIT || 8);
+
+function truncateText(value, limit = TITLE_LIMIT) {
+  if (typeof value !== "string") return value;
+  if (value.length <= limit) return value;
+  return `${value.slice(0, limit)}… [truncated from ${value.length} chars]`;
+}
+
+function buildMinimalTaskContext(task) {
+  const payload = task.input_payload && typeof task.input_payload === "object" ? task.input_payload : null;
+  const acceptanceSource = payload?.splitter_acceptance_criteria || payload?.acceptance_criteria || [];
+  const acceptanceCriteria = Array.isArray(acceptanceSource)
+    ? acceptanceSource.slice(0, ACCEPTANCE_LIMIT).map((item) => truncateText(item, 160))
+    : [];
+  return {
+    slug: task.slug ?? task.id,
+    title: truncateText(task.title || "", TITLE_LIMIT),
+    acceptanceCriteria,
+  };
+}
+
 
 function parseArgs(argv) {
   const args = { agent: DEFAULT_AGENT, limit: DEFAULT_LIMIT, dryRun: false };
@@ -153,16 +194,11 @@ async function fetchTask(store, taskId) {
 }
 
 function buildSplitterPrompt(task) {
-  const baseContext = {
-    title: task.title,
-    description: task.description,
-    priorDefinitionOfDone: task.definition_of_done || null,
-    existingPayload: task.input_payload || null,
-  };
-
-  const formattedContext = JSON.stringify(baseContext, null, 2);
+  const context = buildMinimalTaskContext(task);
+  const formattedContext = JSON.stringify(context, null, 2);
 
   const instructions = `You are Splitter, a systems designer who translates Nate's backlog items into actionable specs for builders.
+You will only receive the task slug, title, and any acceptance criteria captured so far. Do not ask for additional context—fill in reasonable defaults and call out unknowns explicitly.
 Return a STRICT JSON object with this schema:
 {
   "summary": string,
@@ -170,23 +206,31 @@ Return a STRICT JSON object with this schema:
   "acceptance_criteria": string[],
   "handoff_actions": string[],
   "spec_markdown": string
-}
-- summary = 2 sentence high-level view.
-- definition_of_done = bullet-ready paragraph.
-- acceptance_criteria = 3-6 boolean test statements.
-- handoff_actions = ordered next steps for builders / Nate.
-- spec_markdown = rich markdown (headings, tables) covering scope, data sources, API calls, blockers, telemetry hooks.
-Keep references to Mission Control conventions where possible.`;
+}`;
 
   const userContent = `Task context:\n${formattedContext}`;
   return { instructions, userContent };
 }
 
-async function generateSpec({ task, model, dryRun }) {
+function buildSweeperPrompt(task) {
+  const context = buildMinimalTaskContext(task);
+  const formattedContext = JSON.stringify(context, null, 2);
+  const instructions = `You are Sweeper, the Mission Control cleanup editor.
+Only slug, title, and the current acceptance criteria are provided. Tighten the SAME JSON schema as Splitter (summary, definition_of_done, acceptance_criteria, handoff_actions, spec_markdown).
+Rules:
+- Do NOT invent new modules, APIs, or scope.
+- Highlight unknowns explicitly if data is missing.
+- Keep acceptance criteria boolean and testable.
+- Spec markdown should stay concise and builder-ready.`;
+  const userContent = `Existing Splitter output (trimmed to slug/title/acceptance criteria):\n${formattedContext}`;
+  return { instructions, userContent };
+}
+
+async function generateSpec({ task, model, promptBuilder, dryRun }) {
   if (dryRun) {
     return {
       summary: `[dry-run] Spec for ${task.title}`,
-      definition_of_done: "Dry run did not call OpenAI.",
+      definition_of_done: "Dry run did not call model.",
       acceptance_criteria: [],
       handoff_actions: [],
       spec_markdown: `# ${task.title}\n\n_Dry run placeholder spec._`,
@@ -194,65 +238,48 @@ async function generateSpec({ task, model, dryRun }) {
     };
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing OPENAI_API_KEY for agent runner spec generation.");
-  }
-
-  const { instructions, userContent } = buildSplitterPrompt(task);
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: instructions },
-        { role: "user", content: userContent },
-      ],
-    }),
-  });
-
-  const payload = await response.json();
-  if (!response.ok) {
-    const message = payload?.error?.message || "OpenAI request failed";
-    throw new Error(message);
-  }
-
-  const content = payload?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenAI response missing content");
-  }
+  const builder = promptBuilder || buildSplitterPrompt;
+  const { instructions, userContent } = builder(task);
+  const responseContent = await fetchJsonWithCache({ instructions, userContent, model });
 
   let parsed;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(responseContent);
   } catch (err) {
-    throw new Error(`Failed to parse OpenAI JSON: ${err.message}`);
+    throw new Error(`Failed to parse LLM JSON: ${err.message}`);
   }
 
-  return { ...parsed, raw: payload };
+  return { ...parsed, raw: responseContent };
 }
 
-async function persistSpec({ dataClient, session, task, spec, model }) {
+async function persistSpec({ dataClient, session, task, spec, model, agentProfile }) {
   const now = new Date().toISOString();
   const existingPayload =
     task.input_payload && typeof task.input_payload === "object" ? task.input_payload : {};
+  const agentName = session.agent_name || "Splitter";
+  const isSplitter = agentName.toLowerCase() === "splitter";
+  const payloadPatch = isSplitter
+    ? {
+        splitter_spec: spec.spec_markdown,
+        splitter_summary: spec.summary,
+        splitter_handoff_actions: spec.handoff_actions ?? [],
+        splitter_acceptance_criteria: spec.acceptance_criteria ?? [],
+        splitter_last_run_at: now,
+      }
+    : {
+        sweeper_spec: spec.spec_markdown,
+        sweeper_summary: spec.summary,
+        sweeper_handoff_actions: spec.handoff_actions ?? [],
+        sweeper_acceptance_criteria: spec.acceptance_criteria ?? [],
+        sweeper_last_run_at: now,
+      };
   const updatedPayload = {
     ...existingPayload,
-    splitter_spec: spec.spec_markdown,
-    splitter_summary: spec.summary,
-    splitter_handoff_actions: spec.handoff_actions ?? [],
-    splitter_acceptance_criteria: spec.acceptance_criteria ?? [],
-    splitter_last_run_at: now,
+    ...payloadPatch,
   };
 
-  const column_id = task.column_id === "backlog" ? "rev" : task.column_id;
+  const column_id = isSplitter && task.column_id === "backlog" ? "rev" : task.column_id;
+  const owner_initials = isSplitter ? null : task.owner_initials;
 
   if (dataClient.kind === "supabase") {
     await dataClient.client
@@ -261,7 +288,7 @@ async function persistSpec({ dataClient, session, task, spec, model }) {
         definition_of_done: spec.definition_of_done || task.definition_of_done || null,
         input_payload: updatedPayload,
         column_id,
-        owner_initials: null,
+        owner_initials,
         updated_at: now,
       })
       .eq("id", task.id);
@@ -269,6 +296,7 @@ async function persistSpec({ dataClient, session, task, spec, model }) {
     const runnerNotes = {
       summary: spec.summary,
       model,
+      agent: agentName,
       completed_at: now,
     };
 
@@ -286,6 +314,7 @@ async function persistSpec({ dataClient, session, task, spec, model }) {
     const runnerNotes = {
       summary: spec.summary,
       model,
+      agent: agentName,
       completed_at: now,
     };
 
@@ -296,13 +325,14 @@ async function persistSpec({ dataClient, session, task, spec, model }) {
          set definition_of_done = $1,
              input_payload = $2::jsonb,
              column_id = $3,
-             owner_initials = null,
-             updated_at = $4
-         where id = $5`,
+             owner_initials = $4,
+             updated_at = $5
+         where id = $6`,
         [
           spec.definition_of_done || task.definition_of_done || null,
           JSON.stringify(updatedPayload),
           column_id,
+          owner_initials,
           now,
           task.id,
         ]
@@ -329,13 +359,13 @@ async function persistSpec({ dataClient, session, task, spec, model }) {
 
   await logActivity({
     eventType: "agent_spec_generated",
-    summary: `Splitter produced spec for ${task.slug ?? task.title}`,
-    actor: "SplitterRunner",
+    summary: `${(agentProfile?.summaryPrefix || `${agentName} completed spec`)} for ${task.slug ?? task.title}`,
+    actor: agentProfile?.runnerActor || `${agentName}Runner`,
     source: "agent-runner",
     entityType: "task",
     entityId: task.id,
     metadata: {
-      agent: session.agent_name,
+      agent: agentName,
       session_id: session.id,
       model,
     },
@@ -429,10 +459,17 @@ async function markSessionError(dataClient, sessionId, message) {
 
 async function run() {
   const args = parseArgs(process.argv.slice(2));
+  const agentProfile = AGENT_PROFILES[args.agent] || AGENT_PROFILES.Splitter;
+  if (!agentProfile) {
+    throw new Error(`No agent profile configured for ${args.agent}`);
+  }
+  if (!args.model) {
+    args.model = agentProfile.defaultModel;
+  }
   const dataClient = buildDataClient();
   const startTime = Date.now();
   const agentId = `runner:${args.agent.toLowerCase()}`;
-  const basePayload = { agentId, agentName: `${args.agent} Runner`, lane: args.agent };
+  const basePayload = { agentId, agentName: agentProfile.runnerActor || `${args.agent} Runner`, lane: args.agent };
   let completedCount = 0;
   let errorCount = 0;
   try {
@@ -458,13 +495,25 @@ async function run() {
           continue;
         }
         const task = await fetchTask(dataClient, session.task_id);
-        const spec = await generateSpec({ task, model: args.model, dryRun: args.dryRun });
+        const spec = await generateSpec({
+          task,
+          model: args.model,
+          promptBuilder: agentProfile.promptBuilder,
+          dryRun: args.dryRun,
+        });
         if (args.dryRun) {
           console.log(`[dry-run] Would persist spec for ${task.slug ?? task.title}`);
           await resetRunnerStatus(dataClient, session.id);
           continue;
         }
-        await persistSpec({ dataClient, session: locked, task, spec, model: args.model });
+        await persistSpec({
+          dataClient,
+          session: locked,
+          task,
+          spec,
+          model: args.model,
+          agentProfile,
+        });
         completedCount += 1;
         console.log(`Completed spec for ${task.slug ?? task.title}`);
       } catch (err) {
