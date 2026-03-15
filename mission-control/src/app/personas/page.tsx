@@ -1,7 +1,3 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { fetchPersonaAssignments } from "@/lib/data/personaAssignments";
-import { getAvailablePersonas } from "@/data/personas";
-
 export const revalidate = 0;
 
 const STATUS_BADGE = {
