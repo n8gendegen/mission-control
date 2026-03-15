@@ -122,7 +122,6 @@ export default async function PersonasPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar />
       <main className="flex flex-1 flex-col space-y-10 px-8 py-6">
         <header className="space-y-4">
           <div>
