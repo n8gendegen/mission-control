@@ -35,16 +35,31 @@ function hashPromptKey({ provider, model, instructions, userContent }) {
 }
 
 export function getLLMConfig({ model } = {}) {
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (deepseekKey) {
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const resolvedModel = model || process.env.LLM_DEFAULT_MODEL || "minimax/minimax-quantum-8x7b";
+  if (openrouterKey && (!model || resolvedModel.startsWith("openrouter") || resolvedModel.startsWith("minimax"))) {
+    const normalizedModel = resolvedModel.replace(/^openrouter\//, "");
     return {
-      provider: "deepseek",
-      apiKey: deepseekKey,
-      endpoint: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com/chat/completions",
-      model: model || process.env.DEEPSEEK_MODEL || "deepseek-chat",
+      provider: "openrouter",
+      apiKey: openrouterKey,
+      endpoint: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1/chat/completions",
+      model: normalizedModel,
+      headers: {
+        "HTTP-Referer": process.env.OPENROUTER_REFERRER || "https://openclaw.ai",
+        "X-Title": process.env.OPENROUTER_APP_NAME || "Mission Control",
+      },
     };
   }
+  const qwenEndpoint = process.env.QWEN_API_URL || process.env.QWEN_LOCAL_URL;
+  if (qwenEndpoint) {
+    return {
+      provider: "qwen",
+      apiKey: process.env.QWEN_API_KEY || null,
+      endpoint: qwenEndpoint,
+      model: model || process.env.QWEN_MODEL || "qwen2.5-coder",
+    };
+  }
+  const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     return {
       provider: "openai",
@@ -53,7 +68,16 @@ export function getLLMConfig({ model } = {}) {
       model: model || process.env.AGENT_RUNNER_MODEL || "gpt-4.1-mini",
     };
   }
-  throw new Error("Missing DEEPSEEK_API_KEY or OPENAI_API_KEY for LLM calls.");
+  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  if (model?.startsWith("deepseek") && deepseekKey) {
+    return {
+      provider: "deepseek",
+      apiKey: deepseekKey,
+      endpoint: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com/chat/completions",
+      model: model || process.env.DEEPSEEK_MODEL || "deepseek-chat",
+    };
+  }
+  throw new Error("Missing OPENROUTER_API_KEY, QWEN_API_URL, or OPENAI_API_KEY for LLM calls.");
 }
 
 export async function fetchJsonWithCache({ instructions, userContent, model, temperature = 0.2 }) {
@@ -65,12 +89,18 @@ export async function fetchJsonWithCache({ instructions, userContent, model, tem
     return cached.content;
   }
 
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (config.apiKey) {
+    headers.Authorization = `Bearer ${config.apiKey}`;
+  }
+  if (config.headers) {
+    Object.assign(headers, config.headers);
+  }
   const response = await fetch(config.endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
       model: config.model,
       temperature,
