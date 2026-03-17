@@ -92,6 +92,10 @@ export default function ConciergePage() {
     notes: ""
   });
   const [stepIndex, setStepIndex] = useState(0);
+  const [licenseToken, setLicenseToken] = useState("");
+  const [downloadLink, setDownloadLink] = useState<string | null>(null);
+  const [redeemState, setRedeemState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [redeemMessage, setRedeemMessage] = useState<string>("");
 
   const currentStep = useMemo(() => guidedSteps[stepIndex], [stepIndex]);
 
@@ -118,6 +122,34 @@ export default function ConciergePage() {
     } catch (err) {
       setFormState("error");
       setMessage((err as Error).message);
+    }
+  }
+
+  async function handleRedeem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRedeemState("loading");
+    setRedeemMessage("");
+    setDownloadLink(null);
+
+    try {
+      const res = await fetch("/api/concierge/license/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: licenseToken.trim() })
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({ error: "" }));
+        throw new Error(payload.error || "Unable to redeem token right now.");
+      }
+
+      const payload = await res.json();
+      setDownloadLink(payload?.downloadUrl ?? null);
+      setRedeemState("ready");
+      setRedeemMessage("Bundle ready—download link unlocked below.");
+    } catch (err) {
+      setRedeemState("error");
+      setRedeemMessage((err as Error).message);
     }
   }
 
@@ -228,6 +260,51 @@ export default function ConciergePage() {
                 Escalate to concierge
               </a>
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
+          <div className="grid gap-8 md:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">Already purchased? Grab your bundle.</h2>
+              <p className="mt-3 text-white/70">Redeem the concierge token from your receipt to unlock the latest download.</p>
+              <ul className="mt-5 space-y-2 text-sm text-white/60">
+                <li>• Links are unique to each license and can be regenerated anytime.</li>
+                <li>• Tier 2 tokens unlock the Operator bundle; Tier 3 unlocks Operator + Revenue.</li>
+                <li>• DM concierge chat if you prefer we verify the token for you.</li>
+              </ul>
+            </div>
+            <form className="space-y-4" onSubmit={handleRedeem}>
+              <div>
+                <label className="text-sm text-white/60">Concierge token</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
+                  placeholder="tok_..."
+                  value={licenseToken}
+                  onChange={(e) => setLicenseToken(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full rounded-full bg-violet-500 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={redeemState === "loading"}
+              >
+                {redeemState === "loading" ? "Checking token..." : "Redeem token"}
+              </button>
+              {redeemMessage && (
+                <p className={`text-sm ${redeemState === "error" ? "text-rose-300" : "text-emerald-300"}`}>{redeemMessage}</p>
+              )}
+              {downloadLink && (
+                <a
+                  href={downloadLink}
+                  className="block rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200"
+                >
+                  Download concierge bundle ↗
+                </a>
+              )}
+            </form>
           </div>
         </section>
 
