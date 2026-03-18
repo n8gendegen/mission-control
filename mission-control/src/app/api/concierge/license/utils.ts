@@ -33,17 +33,29 @@ export async function upsertLicense({
   stripeSubscriptionId?: string | null;
 }) {
   const supabase = getSupabaseClient();
-  return supabase.from("concierge_licenses").upsert(
-    {
-      email,
-      tier,
-      access_token: accessToken,
-      status: "active",
-      stripe_customer_id: stripeCustomerId || null,
-      stripe_subscription_id: stripeSubscriptionId || null,
-    },
-    { onConflict: "email" }
-  );
+  const existing = await supabase
+    .from("concierge_licenses")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  const payload = {
+    email,
+    tier,
+    access_token: accessToken,
+    status: "active",
+    stripe_customer_id: stripeCustomerId || null,
+    stripe_subscription_id: stripeSubscriptionId || null,
+  };
+
+  if (existing.data?.id) {
+    return supabase
+      .from("concierge_licenses")
+      .update(payload)
+      .eq("id", existing.data.id);
+  }
+
+  return supabase.from("concierge_licenses").insert(payload);
 }
 
 function bundlePathForTier(tier: string) {
