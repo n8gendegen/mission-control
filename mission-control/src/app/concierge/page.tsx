@@ -91,6 +91,9 @@ export default function ConciergePage() {
     tier: "tier1",
     notes: ""
   });
+  const [licenseToken, setLicenseToken] = useState("");
+  const [redeemState, setRedeemState] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [redeemMessage, setRedeemMessage] = useState("");
   const [stepIndex, setStepIndex] = useState(0);
 
   const currentStep = useMemo(() => guidedSteps[stepIndex], [stepIndex]);
@@ -121,6 +124,47 @@ export default function ConciergePage() {
     }
   }
 
+  async function handleRedeem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!licenseToken.trim()) {
+      setRedeemState("error");
+      setRedeemMessage("Enter the license token from your concierge receipt.");
+      return;
+    }
+
+    setRedeemState("submitting");
+    setRedeemMessage("");
+
+    try {
+      const res = await fetch("/api/concierge/license/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: licenseToken.trim() })
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({ error: "" }));
+        throw new Error(payload.error || "We couldn't verify that token. Try again or contact concierge support.");
+      }
+
+      const payload = await res.json();
+      if (!payload.downloadUrl) {
+        throw new Error("Redeem response did not include a download URL.");
+      }
+
+      setRedeemState("success");
+      setRedeemMessage("Bundle ready — opening download in a new tab.");
+      setLicenseToken("");
+
+      if (typeof window !== "undefined") {
+        window.open(payload.downloadUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (err) {
+      setRedeemState("error");
+      setRedeemMessage((err as Error).message);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
       <div className="mx-auto max-w-6xl px-6 space-y-16">
@@ -145,6 +189,37 @@ export default function ConciergePage() {
             >
               Explore guided install ↴
             </button>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-violet-500/40 bg-white/5 p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="flex-1">
+              <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Already booked Tier 2?</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Redeem your Mission Control bundle</h2>
+              <p className="mt-2 text-white/70">Paste the concierge license token from your Stripe receipt and we’ll pull the signed ZIP download instantly.</p>
+            </div>
+            <form className="flex w-full flex-col gap-3 md:max-w-md" onSubmit={handleRedeem}>
+              <label className="text-sm text-white/60">License token</label>
+              <input
+                type="text"
+                className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white focus:border-violet-400 focus:outline-none"
+                placeholder="tok_..."
+                value={licenseToken}
+                onChange={(e) => setLicenseToken(e.target.value)}
+                disabled={redeemState === "submitting"}
+              />
+              <button
+                type="submit"
+                className="rounded-full bg-violet-500 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={redeemState === "submitting"}
+              >
+                {redeemState === "submitting" ? "Verifying..." : "Download bundle"}
+              </button>
+              {redeemMessage && (
+                <p className={`text-sm ${redeemState === "error" ? "text-rose-300" : "text-emerald-300"}`}>{redeemMessage}</p>
+              )}
+            </form>
           </div>
         </section>
 
