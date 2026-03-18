@@ -2,13 +2,21 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { generateAccessToken, upsertLicense } from "../../license/utils";
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY;
 const testWebhookSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET;
 const liveWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const liveSecretKey = process.env.STRIPE_SECRET_KEY;
+const testSecretKey = process.env.STRIPE_TEST_SECRET_KEY;
 
-const stripe = new Stripe(stripeSecret || "", { apiVersion: "2023-10-16" });
+function getStripeClient() {
+  const secret = liveSecretKey || testSecretKey;
+  if (!secret) {
+    throw new Error("Missing STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY");
+  }
+  return new Stripe(secret, { apiVersion: "2026-02-25.clover" });
+}
 
 function constructEvent(rawBody: string, signature: string | null) {
+  const stripe = getStripeClient();
   if (!signature) {
     throw new Error("Missing stripe-signature header");
   }
