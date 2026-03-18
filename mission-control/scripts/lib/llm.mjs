@@ -6,6 +6,18 @@ import { fileURLToPath } from "url";
 const CACHE_FILE = fileURLToPath(new URL("../../tmp/llm-cache.json", import.meta.url));
 let cacheStore = null;
 
+const MODEL_ALIASES = {
+  default: "minimax/minimax-quantum-8x7b",
+  "gpt-4.1-mini": "minimax/minimax-quantum-8x7b",
+  "gpt-4o-mini": "minimax/minimax-quantum-8x7b",
+};
+
+function normalizeModel(requested) {
+  if (!requested) return null;
+  const trimmed = requested.trim();
+  return MODEL_ALIASES[trimmed] || trimmed;
+}
+
 function ensureCacheLoaded() {
   if (cacheStore) {
     return cacheStore;
@@ -36,8 +48,9 @@ function hashPromptKey({ provider, model, instructions, userContent }) {
 
 export function getLLMConfig({ model } = {}) {
   const openrouterKey = process.env.OPENROUTER_API_KEY;
-  const resolvedModel = model || process.env.LLM_DEFAULT_MODEL || "minimax/minimax-quantum-8x7b";
-  if (openrouterKey && (!model || resolvedModel.startsWith("openrouter") || resolvedModel.startsWith("minimax"))) {
+  const requestedModel = normalizeModel(model);
+  const resolvedModel = requestedModel || process.env.LLM_DEFAULT_MODEL || "minimax/minimax-quantum-8x7b";
+  if (openrouterKey && (!requestedModel || resolvedModel.startsWith("openrouter") || resolvedModel.startsWith("minimax"))) {
     const normalizedModel = resolvedModel.replace(/^openrouter\//, "");
     return {
       provider: "openrouter",
