@@ -8,11 +8,12 @@ const TIER2_PATH = process.env.CONCIERGE_TIER2_PATH || "tier2/latest.zip";
 const TIER3_PATH = process.env.CONCIERGE_TIER3_PATH || "tier3/latest.zip";
 const SIGNED_URL_TTL = Number(process.env.CONCIERGE_BUNDLE_TTL_SECONDS || 3600);
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+function getSupabaseClient() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  }
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 }
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export function generateAccessToken() {
   return randomBytes(24).toString("hex");
@@ -31,6 +32,7 @@ export async function upsertLicense({
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
 }) {
+  const supabase = getSupabaseClient();
   return supabase.from("concierge_licenses").upsert(
     {
       email,
@@ -51,6 +53,7 @@ function bundlePathForTier(tier: string) {
 
 export async function createSignedDownload(tier: string) {
   const path = bundlePathForTier(tier);
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase.storage
     .from(BUNDLE_BUCKET)
     .createSignedUrl(path, SIGNED_URL_TTL);
@@ -63,6 +66,7 @@ export async function createSignedDownload(tier: string) {
 }
 
 export async function lookupLicense(accessToken: string) {
+  const supabase = getSupabaseClient();
   return supabase
     .from("concierge_licenses")
     .select("id,email,tier,status")
