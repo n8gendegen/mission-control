@@ -7,9 +7,9 @@ const CACHE_FILE = fileURLToPath(new URL("../../tmp/llm-cache.json", import.meta
 let cacheStore = null;
 
 const MODEL_ALIASES = {
-  default: "minimax/minimax-quantum-8x7b",
-  "gpt-4.1-mini": "minimax/minimax-quantum-8x7b",
-  "gpt-4o-mini": "minimax/minimax-quantum-8x7b",
+  default: "openrouter/openai/gpt-4o-mini",
+  "gpt-4.1-mini": "openrouter/openai/gpt-4o-mini",
+  "gpt-4o-mini": "openrouter/openai/gpt-4o-mini",
 };
 
 function normalizeModel(requested) {
