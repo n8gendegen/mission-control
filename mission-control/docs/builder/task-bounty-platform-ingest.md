@@ -1,19 +1,15 @@
 # Wire bounty feed ingestion + approvals pipes
 
 ## Summary
-Standing up the ingestion + approvals flow so bounty feeds (Gitcoin/Dework/etc.) normalize into spy_opportunities and show up in Approvals.
+Finish the Mission Control surface + telemetry for the new HackerOne ingestion job so ops can approve/decline bounties and monitor runs.
 
 ## Definition of Done
-ETL script + approvals hook is live: pulls at least 3 feeds, dedupes + scores them, writes into spy_opportunities, and exposes the queue in the Approvals tab with a clear accept/decline path.
+HackerOne feed is ingesting via LaunchAgent and Mission Control shows the queue + health for operators.
 
 ## Acceptance Criteria
-- Normalize Gitcoin, Dework, and at least one other feed into a common payload (slug, platform, payout range, scope JSON, source link).
-- Every insert/upsert writes to spy_opportunities with platform + scoring metadata, and logs a run summary (processed/skipped/errors).
-- Exposed in the Mission Control Approvals UI so operators can approve/decline each bounty with a single click.
-- Scheduler/LaunchAgent runs every 30–60 minutes and surfaces errors/idempotency stats in agent_health_status.
-- README/runbook explains how to add another feed + how to manually rerun the ingestion job.
+- Approvals view lists hackerone rows from spy_opportunities with approve/decline actions wired up.
+- agent_health_status card surfaces last run, processed/inserted/error counts, and links to logs/bounty artifacts.
+- README/runbook explains how to manage the launchd job and where to find logs.
 
 ## Handoff Actions
-1. Document schema expectations for spy_opportunities (fields, scoring).
-2. Add LaunchAgent entry for ingestion so it runs continuously.
-3. Link the approvals view/screenshots in Docs so ops knows where to look.
+1. Document remaining steps
