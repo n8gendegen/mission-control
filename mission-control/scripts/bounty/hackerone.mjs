@@ -98,46 +98,51 @@ async function main() {
   let processed = 0;
   let errors = 0;
 
-  do {
-    const page = await fetchPage(cursor);
-    if (!page) break;
+  try {
+    do {
+      const page = await fetchPage(cursor);
+      if (!page) break;
 
-    cursor = page.pageInfo?.hasNextPage ? page.pageInfo.endCursor : null;
-    const batch = (page.edges || [])
-      .map(({ node }) => node)
-      .filter((node) => Number(node.maxBounty || 0) >= 1000)
-      .map((node) => {
-        const { payoutBand, score } = scoreOpportunity(node);
-        processed += 1;
-        return {
-          slug: node.handle,
-          platform: "hackerone",
-          title: node.name,
-          payout_high: Number(node.maxBounty || 0),
-          payout_low: Number(node.averageBounty || 0),
-          scope: node.assets,
-          submission_types: node.submissionTypes,
-          signals: { source: "hackerone", payout_band: payoutBand },
-          score,
-          source_url: node.profileUrl,
-        };
-      });
+      cursor = page.pageInfo?.hasNextPage ? page.pageInfo.endCursor : null;
+      const batch = (page.edges || [])
+        .map(({ node }) => node)
+        .filter((node) => Number(node.maxBounty || 0) >= 1000)
+        .map((node) => {
+          const { payoutBand, score } = scoreOpportunity(node);
+          processed += 1;
+          return {
+            slug: node.handle,
+            platform: "hackerone",
+            title: node.name,
+            payout_high: Number(node.maxBounty || 0),
+            payout_low: Number(node.averageBounty || 0),
+            scope: node.assets,
+            submission_types: node.submissionTypes,
+            signals: { source: "hackerone", payout_band: payoutBand },
+            score,
+            source_url: node.profileUrl,
+          };
+        });
 
-    if (batch.length) {
-      const { error } = await supabase.from("spy_opportunities").upsert(batch, {
-        onConflict: "slug",
-      });
-      if (error) {
-        errors += 1;
-        console.error("Supabase upsert failed", error.message);
-      } else {
-        inserted += batch.length;
+      if (batch.length) {
+        const { error } = await supabase.from("spy_opportunities").upsert(batch, {
+          onConflict: "slug",
+        });
+        if (error) {
+          errors += 1;
+          console.error("Supabase upsert failed", error.message);
+        } else {
+          inserted += batch.length;
+        }
       }
-    }
-  } while (cursor);
-
-  console.log(`[hackerone] processed=${processed} inserted=${inserted} errors=${errors}`);
-  await logRunSummary({ processed, inserted, errors });
+    } while (cursor);
+  } catch (err) {
+    errors += 1;
+    throw err;
+  } finally {
+    console.log(`[hackerone] processed=${processed} inserted=${inserted} errors=${errors}`);
+    await logRunSummary({ processed, inserted, errors });
+  }
 }
 
 main().catch((err) => {

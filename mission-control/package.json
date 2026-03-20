@@ -17,7 +17,8 @@
     "worker:agent-runner": "node scripts/agent-runner.mjs",
     "worker:builder-runner": "node scripts/builder-runner.mjs",
     "spec-generator": "node scripts/spec-generator.mjs",
-    "worker:builder-session": "node scripts/builder-session-runner.mjs"
+    "worker:builder-session": "node scripts/builder-session-runner.mjs",
+    "bounty:hackerone": "node scripts/bounty/hackerone.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
@@ -25,6 +26,7 @@
     "dotenv": "^17.3.1",
     "nanoid": "5.0.7",
     "next": "14.1.0",
+    "node-fetch": "^3.3.2",
     "pg": "^8.19.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
