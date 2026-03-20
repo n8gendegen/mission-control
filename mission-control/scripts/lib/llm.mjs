@@ -7,8 +7,8 @@ const CACHE_FILE = fileURLToPath(new URL("../../tmp/llm-cache.json", import.meta
 let cacheStore = null;
 
 const MODEL_ALIASES = {
-  default: "openrouter/openai/gpt-4o-mini",
-  "gpt-4.1-mini": "openrouter/openai/gpt-4o-mini",
+  default: "openrouter/minimax/minimax-m2.5",
+  "gpt-4.1-mini": "openrouter/minimax/minimax-m2.5",
   "gpt-4o-mini": "openrouter/openai/gpt-4o-mini",
 };
 
