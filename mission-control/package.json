@@ -18,7 +18,8 @@
     "worker:builder-runner": "node scripts/builder-runner.mjs",
     "spec-generator": "node scripts/spec-generator.mjs",
     "worker:builder-session": "node scripts/builder-session-runner.mjs",
-    "bounty:hackerone": "node scripts/bounty/hackerone.mjs"
+    "bounty:hackerone": "node scripts/bounty/hackerone.mjs",
+    "bounty:immunefi": "node scripts/bounty/immunefi.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
