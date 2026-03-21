@@ -201,7 +201,7 @@ export default function ConciergePage() {
                 We prep your machine and guide you through the entire process via a personalized live chatbot, wire the heartbeat automations so tasks complete autonomously, deploy Mission Control so operators have full line of sight, and hand you a revenue-ready suite that lowers operating cost. You just show up and run the playbook.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <button className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50">
+                <button onClick={() => handleCheckout("Premier")} className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50">
                   Launch Premier install
                 </button>
                 <a className="rounded-full border border-white/20 px-6 py-3 text-center text-sm text-white/80" href="#launchpad-tracker">
