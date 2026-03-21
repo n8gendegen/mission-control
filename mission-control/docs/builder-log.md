@@ -27,3 +27,4 @@
 - 2026-03-20T03:51:23.447Z — Builder harness created/updated build plan for task-bounty-platform-ingest
 - 2026-03-20T11:43:21.610Z — Builder harness created/updated build plan for task-bounty-platform-ingest
 - 2026-03-21T11:27:25.068Z — Builder harness created/updated build plan for task-concierge-offer
+- 2026-03-21T17:53:58.933Z — Builder harness created/updated build plan for task-agent-hierarchy-tab
