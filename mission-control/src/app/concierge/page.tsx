@@ -146,6 +146,16 @@ const faqs = [
   "Does this include ongoing maintenance?",
 ];
 
+async function handleCheckout(tier: string) {
+  const res = await fetch("/api/concierge/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier }),
+  });
+  const { url } = await res.json();
+  if (url) window.location.href = url;
+}
+
 export default function ConciergePage() {
   const [token, setToken] = useState("");
   const [redeemState, setRedeemState] = useState({ status: "idle", tier: null, downloadUrl: "", error: "" });
@@ -322,11 +332,11 @@ export default function ConciergePage() {
                   ))}
                 </ul>
                 <div className="mt-4 space-y-3">
-                  <button className="w-full rounded-full border border-white/20 px-4 py-3 text-sm font-semibold text-white">
+                  <button onClick={() => handleCheckout(pkg.tier)} className="w-full rounded-full border border-white/20 px-4 py-3 text-sm font-semibold text-white">
                     Get {pkg.tier} package
                   </button>
                   {pkg.tier !== "Beginner" && (
-                    <button className="w-full rounded-full border border-emerald-400/50 px-4 py-3 text-sm font-semibold text-emerald-200">
+                    <button onClick={() => handleCheckout(pkg.tier)} className="w-full rounded-full border border-emerald-400/50 px-4 py-3 text-sm font-semibold text-emerald-200">
                       {pkg.tier} + subscription
                     </button>
                   )}
