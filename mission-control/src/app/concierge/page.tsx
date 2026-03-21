@@ -1,397 +1,491 @@
-'use client';
+"use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
+import { useState } from "react";
+
+const models = [
+  { label: "GPT", vendor: "OpenAI", latency: "520ms", icon: "/assets/models/openai.svg" },
+  { label: "Claude", vendor: "Anthropic", latency: "610ms", icon: "/assets/models/claude.svg" },
+  { label: "Gemini", vendor: "Google", latency: "430ms", icon: "/assets/models/gemini.svg" },
+  { label: "DeepSeek", vendor: "DeepSeek", latency: "340ms", icon: "/assets/models/deepseek.svg" },
+  { label: "Qwen", vendor: "Alibaba", latency: "890ms", icon: "/assets/models/qwen.svg" },
+];
+
+const roiRows = [
+  { label: "Hours/week currently spent on tasks agents will handle", value: "12–15 hrs" },
+  { label: "Founder’s effective hourly rate ($10K/mo ÷ 160 hrs)", value: "~$62/hr" },
+  { label: "Weekly value of recovered time", value: "$750–$940" },
+  { label: "Monthly value of recovered time", value: "$3,000–$3,750" },
+  { label: "LaunchPad investment (one-time)", value: "$399" },
+  { label: "Payback period", value: "Under 1 week" },
+  { label: "12-month ROI", value: "90–113x return" },
+];
 
 const benefits = [
   "Hands-on install with zero guesswork",
-  "Secure secrets + battle-tested automations",
-  "Mission Control deployed with starter data",
-  "Lead funnel + guided install ready day one",
-  "Post-install coaching so the team can run solo",
-  "Security & compliance handoff checklist for your ops lead"
+  "Battle-tested automation rules so your agents work 24/7",
+  "Mission Control deployed with starter data so tasks ship immediately",
+  "Multi-agent model so parallel workstreams stay unblocked",
+  "Bounty and YouTube swimlanes deliver revenue from day one",
+  "Security and compliance baked into the control framework",
 ];
 
-const howItWorks = [
+const installSteps = [
   {
-    title: "Discovery",
-    body: "30-minute kickoff to understand your environment, security requirements, and priority automations."
+    title: "Checkout",
+    body: "Stripe-enabled purchase of your preferred pricing tier unlocks the chat-guided install experience.",
   },
   {
     title: "Install & Validation",
-    body: "We prep the machine, run the Clawbot/OpenClaw scripts, and validate heartbeat + status automations."
+    body: "We prep the machine, run the Clawbot/OpenClaw scripts, and validate heartbeat + status automations.",
   },
   {
-    title: "Mission Control (Tier 2)",
-    body: "Deploy Mission Control to Vercel/Supabase, wire the concierge funnel, and seed Revenue Lab tasks."
+    title: "Mission Control (Operator/Premier)",
+    body: "Deploy Mission Control to Vercel/Supabase, wire the Launchpad funnel, and seed Operator/Premier tasks.",
   },
   {
     title: "Handoff & Coaching",
-    body: "Async Loom walkthrough + DM support so you know exactly what shipped and how to extend it."
-  }
+    body: "Robust documentation for your OpenClaw agent plus 7 days of chatbot support for follow-up questions.",
+  },
 ];
 
-const faq = [
+const packages = [
   {
-    q: "What does the concierge actually install?",
-    a: "We configure OpenClaw/Clawbot, set up heartbeat + status automations, and (Tier 2) deploy Mission Control with starter data."
+    tier: "Beginner",
+    badge: "Launchpad install",
+    price: "$49",
+    features: ["One-time OpenClaw install on your desktop", "Targeted chatbot guide with paste-ready commands"],
+    accent: "border-white/10 bg-white/5",
+    primary: true,
   },
   {
-    q: "How fast can we go live?",
-    a: "Tier 1 installs usually ship in 3–5 business days from kickoff; Tier 2 adds ~2 days for Mission Control work."
+    tier: "Operator",
+    badge: "Automation bundle",
+    price: "$299",
+    features: [
+      "Everything in Beginner",
+      "Mission Control task automation",
+      "Mission Control data spend analysis",
+      "Cron jobs + sub-agent structure",
+    ],
+    accent: "border-violet-500/40 bg-violet-500/10",
   },
   {
-    q: "Do you need access to our secrets?",
-    a: "We work from your vault (1Password/Bitwarden) so secrets never leave your control."
+    tier: "Premier",
+    badge: "Revenue + operator",
+    price: "$399",
+    features: [
+      "Everything in Operator",
+      "Mission Control Bounty Hunter module",
+      "Mission Control YouTube content creation conveyor",
+      "Full GitHub repo + Vercel connections",
+    ],
+    accent: "border-amber-500/40 bg-amber-500/10",
   },
-  {
-    q: "What if we already started the install?",
-    a: "We audit what you have, reuse components, and only bill for the scope that remains."
-  },
-  {
-    q: "Does this include ongoing maintenance?",
-    a: "Tier 1 includes 7-day DM support; longer retainers are scoped separately once you are live."
-  }
 ];
 
-const guidedSteps = [
+const screenshotCards = [
+  { label: "Tasks", copy: "Live pipeline + agent status at a glance.", image: "/images/mission-control/tasks.png" },
+  { label: "Data", copy: "Spend tracking, usage trends, and guardrails.", image: "/images/mission-control/data.png" },
+  { label: "Content Lab", copy: "YouTube/content conveyor with ready-to-ship assets.", image: "/images/mission-control/content.png" },
+  { label: "Bounty", copy: "Revenue plays + bounty queue awaiting activation.", image: "/images/mission-control/bounty.png" },
+  { label: "Calendar", copy: "Cron jobs, concierge installs, and follow-ups.", image: "/images/mission-control/calendar.png" },
+];
+
+const bundleCards = [
   {
-    title: "Pick your OS",
-    content:
-      "Tell us whether you're on macOS Sonoma/Ventura, Ubuntu 22.04+, or another Linux flavor so we can pull the right script."
+    tier: 2,
+    title: "Operator bundle ZIP",
+    copy: "Mission Control starter data, cron helpers, concierge CTA wiring, and Revenue Lab backlog.",
+    storagePath: "concierge-bundles/tier2/latest.zip",
   },
   {
-    title: "Prep dependencies",
-    content:
-      "Install Homebrew (mac) or apt packages (Ubuntu), plus Node 20, pnpm, and the OpenClaw CLI with one command."
+    tier: 3,
+    title: "Premier bundle ZIP",
+    copy: "Adds bounty + YouTube automations, repo wiring, and white-glove playbooks for operators.",
+    storagePath: "concierge-bundles/tier3/latest.zip",
+  },
+];
+
+const tracker = [
+  {
+    title: "Beginner install",
+    status: "Now",
+    headline: "OpenClaw ready",
+    copy: "Chatbot-guided desktop install finished with your Launchpad token synced.",
+    progress: 75,
   },
   {
-    title: "Configure Clawbot",
-    content:
-      "We step through openclaw init, connect your GitHub repo, and drop in the heartbeat + status tasks."
+    title: "Operator automation",
+    status: "Next",
+    headline: "Mission Control wired",
+    copy: "Automation, spend analytics, and cron/sub-agent scaffolding activated.",
+    progress: 50,
   },
   {
-    title: "Deploy Mission Control",
-    content:
-      "For Tier 2, we link Supabase + Vercel, run the schema migrations, and push the concierge route."
+    title: "Premier deploy",
+    status: "Queue",
+    headline: "Repo + Vercel handoff",
+    copy: "Full GitHub repo, Vercel connections, and bounty/youtube modules staged.",
+    progress: 25,
   },
   {
-    title: "Escalate if stuck",
-    content:
-      "Hit the concierge button at any time and we jump on async/Zoom to finish the install for you."
-  }
+    title: "White glove",
+    status: "Recurring",
+    headline: "Weekly enhancements",
+    copy: "Newsletter + repo improvement pushes continuously enhance Mission Control.",
+    progress: 10,
+  },
+];
+
+const faqs = [
+  "What does Launchpad actually install?",
+  "How fast can we go live?",
+  "Do you need access to our secrets?",
+  "What if we already started the install?",
+  "Does this include ongoing maintenance?",
 ];
 
 export default function ConciergePage() {
-  const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const [message, setMessage] = useState<string>("");
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    company: "",
-    tier: "tier1",
-    notes: ""
-  });
-  const [licenseToken, setLicenseToken] = useState("");
-  const [redeemState, setRedeemState] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const [redeemMessage, setRedeemMessage] = useState("");
-  const [stepIndex, setStepIndex] = useState(0);
-
-  const currentStep = useMemo(() => guidedSteps[stepIndex], [stepIndex]);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormState("submitting");
-    setMessage("");
-
-    try {
-      const res = await fetch("/api/concierge-leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({ error: "" }));
-        throw new Error(payload.error || "Unable to submit lead right now.");
-      }
-
-      setFormState("success");
-      setMessage("Thanks! We’ll reply with scheduling options within one business day.");
-      setFormData({ name: "", email: "", company: "", tier: "tier1", notes: "" });
-    } catch (err) {
-      setFormState("error");
-      setMessage((err as Error).message);
-    }
-  }
-
-  async function handleRedeem(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!licenseToken.trim()) {
-      setRedeemState("error");
-      setRedeemMessage("Enter the license token from your concierge receipt.");
+  const [token, setToken] = useState("");
+  const [redeemState, setRedeemState] = useState({ status: "idle", tier: null, downloadUrl: "", error: "" });
+  async function redeemToken() {
+    if (!token.trim()) {
+      setRedeemState({ status: "error", tier: null, downloadUrl: "", error: "Enter your Launchpad token" });
       return;
     }
-
-    setRedeemState("submitting");
-    setRedeemMessage("");
-
     try {
-      const res = await fetch("/api/concierge/license/redeem", {
+      setRedeemState({ status: "loading", tier: null, downloadUrl: "", error: "" });
+      const resp = await fetch("/api/concierge/license/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: licenseToken.trim() })
+        body: JSON.stringify({ token: token.trim() })
       });
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({ error: "" }));
-        throw new Error(payload.error || "We couldn't verify that token. Try again or contact concierge support.");
+      const payload = await resp.json();
+      if (!resp.ok) {
+        throw new Error(payload?.error || "Redeem failed");
       }
-
-      const payload = await res.json();
-      if (!payload.downloadUrl) {
-        throw new Error("Redeem response did not include a download URL.");
-      }
-
-      setRedeemState("success");
-      setRedeemMessage("Bundle ready — opening download in a new tab.");
-      setLicenseToken("");
-
-      if (typeof window !== "undefined") {
-        window.open(payload.downloadUrl, "_blank", "noopener,noreferrer");
-      }
+      setRedeemState({ status: "success", tier: Number(payload.tier), downloadUrl: payload.downloadUrl, error: "" });
     } catch (err) {
-      setRedeemState("error");
-      setRedeemMessage((err as Error).message);
+      const message = err instanceof Error ? err.message : "Redeem failed";
+      setRedeemState({ status: "error", tier: null, downloadUrl: "", error: message });
     }
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
       <div className="mx-auto max-w-6xl px-6 space-y-16">
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-10 shadow-2xl shadow-violet-500/20">
-          <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Clawbot Concierge</p>
-          <h1 className="mt-4 text-4xl font-semibold text-white">Launch OpenClaw + Mission Control in days, not weeks.</h1>
-          <p className="mt-4 max-w-3xl text-base text-white/70">
-            We install the entire agent stack, deploy Mission Control, wire your concierge funnel, and leave you with
-            <br/><span className="text-white/60 text-sm">We can onboard up to 3 concierge installs per week—tell us if you&rsquo;re targeting a specific launch date.</span>
-            automations that are audited, documented, and ready to scale.
-          </p>
-          <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center">
-            <a
-              href="#lead-form"
-              className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50"
-            >
-              Book the concierge (3 slots/week)
-            </a>
-            <button
-              className="rounded-full border border-white/20 px-6 py-3 text-sm text-white/80"
-              onClick={() => setStepIndex(0)}
-            >
-              Explore guided install ↴
-            </button>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-violet-500/40 bg-white/5 p-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end">
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Already booked Tier 2?</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Redeem your Mission Control bundle</h2>
-              <p className="mt-2 text-white/70">Paste the concierge license token from your Stripe receipt and we’ll pull the signed ZIP download instantly.</p>
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#120F1E] via-[#0C0F1C] to-[#05070D] p-10 shadow-[0_25px_70px_-35px_rgba(96,76,255,0.6)]">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+            <div className="flex flex-1 flex-col gap-6">
+              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.4em] text-white/60">
+                <span className="text-violet-300">Launchpad</span>
+                <span className="h-px w-10 bg-white/20" />
+                <span>White-glove install</span>
+              </div>
+              <h1 className="text-4xl font-semibold text-white sm:text-5xl">
+                Launch OpenClaw + Mission Control in minutes, not weeks.
+              </h1>
+              <p className="max-w-2xl text-base text-white/70">
+                We prep your machine and guide you through the entire process via a personalized live chatbot, wire the heartbeat automations so tasks complete autonomously, deploy Mission Control so operators have full line of sight, and hand you a revenue-ready suite that lowers operating cost. You just show up and run the playbook.
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <button className="rounded-full bg-violet-500 px-6 py-3 text-center text-sm font-semibold text-white shadow shadow-violet-500/50">
+                  Launch Premier install
+                </button>
+                <a className="rounded-full border border-white/20 px-6 py-3 text-center text-sm text-white/80" href="#launchpad-tracker">
+                  See install experience ↴
+                </a>
+              </div>
             </div>
-            <form className="flex w-full flex-col gap-3 md:max-w-md" onSubmit={handleRedeem}>
-              <label className="text-sm text-white/60">License token</label>
-              <input
-                type="text"
-                className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white focus:border-violet-400 focus:outline-none"
-                placeholder="tok_..."
-                value={licenseToken}
-                onChange={(e) => setLicenseToken(e.target.value)}
-                disabled={redeemState === "submitting"}
-              />
-              <button
-                type="submit"
-                className="rounded-full bg-violet-500 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
-                disabled={redeemState === "submitting"}
-              >
-                {redeemState === "submitting" ? "Verifying..." : "Download bundle"}
-              </button>
-              {redeemMessage && (
-                <p className={`text-sm ${redeemState === "error" ? "text-rose-300" : "text-emerald-300"}`}>{redeemMessage}</p>
-              )}
-            </form>
+            <div className="flex flex-1 justify-end">
+              <div className="relative isolate w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6">
+                <div className="absolute -left-6 top-6 h-24 w-24 rounded-full bg-violet-500/30 blur-3xl" />
+                <div className="absolute -bottom-6 right-0 h-24 w-24 rounded-full bg-fuchsia-500/30 blur-3xl" />
+                <div className="relative flex items-center gap-4">
+                  <Image
+                    alt="OpenClaw mark"
+                    width={88}
+                    height={88}
+                    className="drop-shadow-[0_20px_40px_rgba(255,90,95,0.35)]"
+                    src="/assets/brand/openclaw.svg"
+                  />
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.4em] text-white/50">OpenClaw Launchpad</p>
+                    <p className="text-2xl font-semibold text-white">Launchpad install steps</p>
+                    <p className="text-sm text-white/70">Avg deploy time • 25 minutes</p>
+                  </div>
+                </div>
+                <div className="mt-6 space-y-3 text-sm text-white/70">
+                  <div className="flex items-center justify-between">
+                    <p>Beginner install</p>
+                    <p className="font-mono text-white">complete</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p>Operator automation</p>
+                    <p className="font-mono text-amber-300">in progress</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p>Premier deploy</p>
+                    <p className="font-mono text-fuchsia-300">up next</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p>White Glove Improvements</p>
+                    <p className="font-mono text-sky-300">shipping weekly</p>
+                  </div>
+                </div>
+                <div className="mt-6 rounded-2xl border border-white/15 bg-black/30 p-4 text-xs text-white/60">
+                  <p className="font-semibold text-white">Live installation chat help</p>
+                  <p className="mt-1 text-white/70">
+                    “You’re on macOS—press ⌘ + Space, type ‘Terminal,’ hit return, and I’ll paste the install script for you.”
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
+        {/* Model spine */}
+        <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-xs uppercase tracking-[0.4em] text-white/40">
+            <span>Agents ride on</span>
+            <div className="hidden h-px flex-1 bg-white/10 sm:block" />
+            <span className="text-white/60">Multi-model spine</span>
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-5">
+            {models.map((model) => (
+              <div key={model.label} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#080D15] p-3">
+                <Image alt={model.label} width={36} height={36} src={model.icon} />
+                <div>
+                  <p className="text-sm font-semibold text-white">{model.label}</p>
+                  <p className="text-xs text-white/50">{model.vendor}</p>
+                </div>
+                <span className="ml-auto rounded-full bg-white/10 px-3 py-1 text-xs font-mono text-white/70">{model.latency}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ROI + install experience */}
         <section className="grid gap-6 rounded-3xl border border-white/5 bg-[#0b0f16] p-8 md:grid-cols-2">
-          <div>
-            <h2 className="text-2xl font-semibold text-white">Why teams book the concierge</h2>
-            <ul className="mt-6 space-y-3 text-white/70">
-              {benefits.map((benefit) => (
-                <li key={benefit} className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-violet-400" />
-                  <span>{benefit}</span>
-                </li>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">ROI justification</p>
+            <p className="mt-2 text-sm text-white/70">Conservative scenario for a founder doing $10K/mo.</p>
+            <div className="mt-5 divide-y divide-white/10 border-t border-b border-white/10 text-sm text-white/70">
+              {roiRows.map((row) => (
+                <div key={row.label} className="flex flex-col gap-1 py-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">{row.label}</p>
+                  <p className="text-base font-semibold text-white">{row.value}</p>
+                </div>
               ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-white">How it works</h2>
-            <ol className="mt-6 space-y-4 text-white/70">
-              {howItWorks.map((item) => (
-                <li key={item.title}>
-                  <p className="font-semibold text-white">{item.title}</p>
-                  <p className="text-sm text-white/60">{item.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
-          <h2 className="text-2xl font-semibold text-white">Concierge tiers</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Tier 1</p>
-              <h3 className="mt-3 text-xl font-semibold text-white">Done-for-you Clawbot install</h3>
-              <p className="text-3xl font-bold text-white mt-2">$1,950</p>
-              <ul className="mt-4 space-y-2 text-sm text-white/70">
-                <li>Device audit + dependency prep</li>
-                <li>OpenClaw/Clawbot configured with heartbeat + status automations</li>
-                <li>Secrets stored via your vault; rollback + validation plan delivered</li>
-                <li>7-day DM support after go-live</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-violet-500/40 bg-violet-500/10 p-6">
-              <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Tier 2</p>
-              <h3 className="mt-3 text-xl font-semibold text-white">Mission Control Starter Pack</h3>
-              <p className="text-3xl font-bold text-white mt-2">$4,350</p>
-              <ul className="mt-4 space-y-2 text-sm text-white/80">
-                <li>Everything in Tier 1</li>
-                <li>Mission Control deployed on Vercel + Supabase with starter data</li>
-                <li>Concierge landing page + lead capture connected to Airtable</li>
-                <li>Revenue Lab backlog seeded + 14-day coaching window</li>
-              </ul>
             </div>
           </div>
-        </section>
-
-        <section id="guided-flow" className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
-          <h2 className="text-2xl font-semibold text-white">Guided install (DIY helper)</h2>
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm uppercase tracking-[0.4em] text-white/40">Step {stepIndex + 1} of {guidedSteps.length}</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">{currentStep.title}</h3>
-            <p className="mt-2 text-white/70">{currentStep.content}</p>
-            <div className="mt-4 flex gap-3">
-              <button
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 disabled:opacity-30"
-                disabled={stepIndex === 0}
-                onClick={() => setStepIndex((prev) => Math.max(prev - 1, 0))}
-              >
-                Back
-              </button>
-              <button
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-white"
-                onClick={() => setStepIndex((prev) => Math.min(prev + 1, guidedSteps.length - 1))}
-              >
-                Next
-              </button>
-              <a
-                href="#lead-form"
-                className="ml-auto rounded-full bg-violet-500 px-4 py-2 text-sm font-semibold text-white"
-              >
-                Escalate to concierge
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section id="lead-form" className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Tell us about your install</h2>
-              <p className="mt-2 text-white/70">We reply within one business day with scheduling options and next steps.</p>
-              <div className="mt-6 space-y-4 text-sm text-white/70">
-                <p>📞 30-min discovery call</p>
-                <p>🛠️ Install + Mission Control deployment</p>
-                <p>🗂️ Loom walkthrough + docs so you can run solo</p>
-              </div>
+              <h2 className="text-2xl font-semibold text-white">Why teams choose us</h2>
+              <ul className="mt-6 space-y-3 text-white/70">
+                {benefits.map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-violet-400" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label className="text-sm text-white/60">Name</label>
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm text-white/60">Email</label>
-                <input
-                  type="email"
-                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm text-white/60">Company / Team</label>
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-white/60">Tier interest</label>
-                <select
-                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
-                  value={formData.tier}
-                  onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
-                >
-                  <option value="tier1">Tier 1 – Clawbot install ($1,950)</option>
-                  <option value="tier2">Tier 2 – Add Mission Control ($4,350)</option>
-                  <option value="not-sure">Not sure yet</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-white/60">Context / blockers</label>
-    <p className="text-xs text-white/40">Where are you stuck? Mention OS, security constraints, or tools we should prep.</p>
-                <textarea
-                  className="mt-1 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-violet-400 focus:outline-none"
-                  rows={4}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full rounded-full bg-violet-500 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-                disabled={formState === "submitting"}
-              >
-                {formState === "submitting" ? "Sending..." : "Submit"}
-              </button>
-              {message && (
-                <p className={`text-sm ${formState === "error" ? "text-rose-300" : "text-emerald-300"}`}>{message}</p>
-              )}
-            </form>
+            <div>
+              <h2 className="text-2xl font-semibold text-white">Launchpad Installation Experience</h2>
+              <ol className="mt-6 space-y-4 text-white/70">
+                {installSteps.map((step) => (
+                  <li key={step.title}>
+                    <p className="font-semibold text-white">{step.title}</p>
+                    <p className="text-sm text-white/60">{step.body}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </section>
 
+        {/* Packages */}
+        <section id="packages" className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
+          <h2 className="text-2xl font-semibold text-white">Launchpad packages</h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {packages.map((pkg) => (
+              <div key={pkg.tier} className={`rounded-2xl border ${pkg.accent} p-6`}>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50">{pkg.tier}</p>
+                <h3 className="mt-3 text-xl font-semibold text-white">{pkg.badge}</h3>
+                <p className="mt-2 text-3xl font-bold text-white">{pkg.price}</p>
+                <ul className="mt-4 space-y-2 text-sm text-white/70">
+                  {pkg.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+                <div className="mt-4 space-y-3">
+                  <button className="w-full rounded-full border border-white/20 px-4 py-3 text-sm font-semibold text-white">
+                    Get {pkg.tier} package
+                  </button>
+                  {pkg.tier !== "Beginner" && (
+                    <button className="w-full rounded-full border border-emerald-400/50 px-4 py-3 text-sm font-semibold text-emerald-200">
+                      {pkg.tier} + subscription
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Monthly add-on</p>
+            <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-white">White glove subscription</h3>
+                <p className="text-sm text-white/70">Weekly Newsletter + repo enhancements that push new Mission Control features.</p>
+              </div>
+              <p className="text-2xl font-bold text-white">$69 / mo</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Screenshot gallery */}
+        <section className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/40">Mission Control</p>
+              <h2 className="text-2xl font-semibold text-white">What operators see day-to-day</h2>
+              <p className="text-sm text-white/70">Screenshots from the live dashboard so buyers can peek at the Tasks, Data, Content Lab, Bounty, and Calendar views.</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {screenshotCards.map((card) => (
+              <figure key={card.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white/70">
+                <div className="overflow-hidden rounded-xl border border_white/5">
+                  <Image alt={`${card.label} screenshot`} width={900} height={540} className="h-auto w-full object-cover" src={card.image} />
+                </div>
+                <figcaption className="mt-3">
+                  <p className="text-sm font-semibold text-white">{card.label}</p>
+                  <p className="text-xs text-white/60">{card.copy}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        {/* Tracker */}
+        <section id="launchpad-tracker" className="rounded-[32px] border border-white/10 bg-[#05070D] p-8">
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/40">Launchpad tracker</p>
+              <h2 className="text-2xl font-semibold text-white">Where your Launchpad install is right now</h2>
+            </div>
+            <div className="text-xs text-white/40">Syncing live data…</div>
+          </div>
+          <div className="mt-8 grid gap-6 lg:grid-cols-4">
+            {tracker.map((card) => (
+              <article key={card.title} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="flex items-center justify_between text-xs uppercase tracking-[0.4em] text-white/40">
+                  <span>{card.title}</span>
+                  <span className="text-white/60">ETA {card.status}</span>
+                </div>
+                <p className="mt-4 text-lg font-semibold text_white">{card.headline}</p>
+                <p className="mt-2 text-sm text-white/70">{card.copy}</p>
+                <div className="mt-6">
+                  <div className="h-2 w-full rounded-full bg_white/10">
+                    <div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400" style={{ width: `${card.progress}%` }} />
+                  </div>
+                  <p className="mt-2 text-xs text-white/50">{card.progress}% complete</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ */}
         <section className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
           <h2 className="text-2xl font-semibold text-white">Frequently asked questions</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {faq.map((item) => (
-              <div key={item.q} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm font-semibold text-white">{item.q}</p>
-                <p className="mt-2 text-sm text-white/70">{item.a}</p>
+            {faqs.map((question) => (
+              <div key={question} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm font-semibold text-white">{question}</p>
+                <p className="mt-2 text-sm text-white/70">
+                  We configure OpenClaw/Clawbot, set up heartbeat + status automations, and (Operator/Premier) deploy Mission Control with starter data.
+                </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Install chat (ZIP bundle block will sit below this next) */}
+        <section id="launchpad-chat" className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
+          <div className="mb-6 space-y-3">
+            <p className="text-xs uppercase tracking-[0.4em] text-violet-300">Install chat</p>
+            <h2 className="text-2xl font-semibold text-white">Personal Launchpad Guide</h2>
+            <p className="text-sm text-white/70">
+              Post checkout, customers automatically receive a token that activates a 7-day trial where they can ask anything about their OpenClaw/Mission Control install and get real-time guidance.
+            </p>
+          </div>
+          <div className="space-y-8 rounded-3xl border border-white/10 bg-white/5 p-6 text-white">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-2xl font-semibold">Launchpad install chat</h3>
+              </div>
+              <p className="text-sm text-white/70">
+                This DeepSeek-powered guide only answers questions about installing OpenClaw + Mission Control. After checkout we auto-import your token & JWT so you can jump straight into the conversation.
+              </p>
+            </div>
+            <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); redeemToken(); }}>
+              <label className="text-sm uppercase tracking-wide text-white/40">Launchpad token</label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-2 text-white"
+                  placeholder="paste your Launchpad token"
+                  value={token}
+                  onChange={(event) => setToken(event.target.value)}
+                />
+                <button
+                  className="rounded-2xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  type="submit"
+                  disabled={redeemState.status === "loading"}
+                >
+                  {redeemState.status === "loading" ? "Checking…" : "Redeem"}
+                </button>
+              </div>
+            </form>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
+              {redeemState.status === "success" && redeemState.downloadUrl ? (
+                <span className="text-emerald-300">Unlocked Tier {redeemState.tier} • <a className="underline" href={redeemState.downloadUrl}>Download bundle</a></span>
+              ) : redeemState.status === "error" ? (
+                <span className="text-rose-300">{redeemState.error}</span>
+              ) : (
+                <span>Paste a valid Launchpad token above to unlock the chat + bundles.</span>
+              )}
+            </div>
+          </div>
+        </section>
+        <section className="rounded-3xl border border-white/5 bg-[#0b0f16] p-8">
+          <h2 className="text-2xl font-semibold text-white">Downloadable bundle artifacts</h2>
+          <p className="mt-2 text-sm text-white/70">Redeem your Launchpad token to unlock signed ZIPs for the Operator (Tier 2) and Premier (Tier 3) bundles.</p>
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {bundleCards.map((card) => {
+              const unlocked = redeemState.status === "success" && Number(redeemState.tier) >= card.tier;
+              return (
+                <article key={card.tier} className={`rounded-2xl border ${unlocked ? "border-emerald-400/60 bg-emerald-400/5" : "border-white/10 bg-white/5"} p-6`}>
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/50">Tier {card.tier}</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">{card.title}</h3>
+                  <p className="mt-2 text-sm text-white/70">{card.copy}</p>
+                  <p className="mt-4 text-xs text-white/50">Supabase bucket: {card.storagePath}</p>
+                  <p className="text-xs text-white/50">Redeem endpoint: /api/concierge/license/redeem</p>
+                  <div className="mt-4">
+                    {unlocked ? (
+                      <a className="inline-flex items-center gap-2 rounded-full bg-emerald-500/80 px-4 py-2 text-sm font-semibold text-white" href={redeemState.downloadUrl}>
+                        Download ZIP ↗
+                      </a>
+                    ) : (
+                      <span className="text-xs uppercase tracking-[0.3em] text-white/40">Locked</span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       </div>
