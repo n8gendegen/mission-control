@@ -146,11 +146,11 @@ const faqs = [
   "Does this include ongoing maintenance?",
 ];
 
-async function handleCheckout(tier: string) {
+async function handleCheckout(tier: string, includeSubscription = false) {
   const res = await fetch("/api/concierge/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tier }),
+    body: JSON.stringify({ tier, includeSubscription }),
   });
   const { url } = await res.json();
   if (url) window.location.href = url;
@@ -336,7 +336,7 @@ export default function ConciergePage() {
                     Get {pkg.tier} package
                   </button>
                   {pkg.tier !== "Beginner" && (
-                    <button onClick={() => handleCheckout(pkg.tier)} className="w-full rounded-full border border-emerald-400/50 px-4 py-3 text-sm font-semibold text-emerald-200">
+                    <button onClick={() => handleCheckout(pkg.tier, true)} className="w-full rounded-full border border-emerald-400/50 px-4 py-3 text-sm font-semibold text-emerald-200">
                       {pkg.tier} + subscription
                     </button>
                   )}

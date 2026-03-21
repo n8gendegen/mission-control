@@ -1,0 +1,7 @@
+[2026-03-21T15:22:54Z] starting immunefi ingest
+
+> mission-control@0.1.0 bounty:immunefi
+> node scripts/bounty/immunefi.mjs
+
+[immunefi] processed=252 inserted=252 errors=0
+[2026-03-21T15:22:56Z] immunefi ingest complete
