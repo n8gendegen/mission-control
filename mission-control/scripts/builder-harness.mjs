@@ -325,13 +325,38 @@ async function main() {
     run(`git push origin ${branchName} --force`);
   }
 
+  // Check if PR already exists for this branch — update it if so, else create
   const prTitle = `Builder: ${task.title}`;
   const prBody = `Automation scaffold derived from splitter spec for ${task.slug}.`;
   const envVars = { ...process.env, GH_TOKEN: token };
-  run(`gh pr create --title "${prTitle}" --body "${prBody}" --head ${branchName} --base main`, { env: envVars });
+  
+  let prUrl = null;
+  try {
+    // Try to view existing PR for this branch
+    const existingPr = capture(`gh pr view ${branchName} --json number --jq .number 2>/dev/null || echo ""`);
+    if (existingPr) {
+      // PR exists — update it
+      run(`gh pr edit ${existingPr} --title "${prTitle}" --body "${prBody}"`, { env: envVars });
+      prUrl = capture(`gh pr view ${existingPr} --json url --jq .url`);
+      console.log(`Updated existing PR #${existingPr}`);
+    } else {
+      // No PR exists — create one
+      run(`gh pr create --title "${prTitle}" --body "${prBody}" --head ${branchName} --base main`, { env: envVars });
+      prUrl = capture(`gh pr view ${branchName} --json url --jq .url`);
+    }
+  } catch (err) {
+    // Fallback: try create with force-push first
+    try {
+      run(`gh pr create --title "${prTitle}" --body "${prBody}" --head ${branchName} --base main`, { env: envVars });
+      prUrl = capture(`gh pr view ${branchName} --json url --jq .url`);
+    } catch {
+      // PR might already exist from race — try to get URL
+      prUrl = capture(`gh pr view ${branchName} --json url --jq .url 2>/dev/null`) || null;
+    }
+  }
 
   const commitSha = capture("git rev-parse HEAD");
-  console.log(`Commit ${commitSha} pushed on ${branchName}`);
+  console.log(`Commit ${commitSha} pushed on ${branchName}` + (prUrl ? ` | ${prUrl}` : ""));
 
   await markTask(store, task, branchName);
 }
