@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   const session = await stripe.checkout.sessions.create({
     mode: includeSubscription ? "subscription" : "payment",
     line_items: lineItems,
-    success_url: `${request.nextUrl.origin}/concierge?success=true&tier=${tier}`,
+    success_url: `${request.nextUrl.origin}/concierge?success=true&tier=${tier}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${request.nextUrl.origin}/concierge?canceled=true`,
   });
 
